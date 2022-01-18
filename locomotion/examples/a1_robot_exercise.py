@@ -16,7 +16,10 @@ import pybullet_data
 from pybullet_utils import bullet_client
 
 from locomotion.robots import a1_robot
+from locomotion.robots import a1
 from locomotion.robots import robot_config
+
+from locomotion.envs import locomotion_gym_env
 FREQ = 0.5
 
 
@@ -24,41 +27,38 @@ def main(_):
   logging.info(
       "WARNING: this code executes low-level controller on the robot.")
   logging.info("Make sure the robot is hang on rack before proceeding.")
-#  input("Press enter to continue...")
+  input("Press enter to continue...")
 
-  time.sleep(1)
   # Construct sim env and real robot
-  p = bullet_client.BulletClient(connection_mode=pybullet.DIRECT)
+  p = bullet_client.BulletClient(connection_mode=pybullet.GUI)
   p.setAdditionalSearchPath(pybullet_data.getDataPath())
-  robot = a1_robot.A1Robot(pybullet_client=p, action_repeat=1)
+  p.setPhysicsEngineParameter(numSolverIterations=30)
+  p.setTimeStep(0.001)
+  p.setGravity(0, 0, -9.8)
+  p.setPhysicsEngineParameter(enableConeFriction=0)
+  p.setAdditionalSearchPath(pybullet_data.getDataPath())
+  p.loadURDF("plane.urdf")
+  robot = a1.A1(pybullet_client=p, action_repeat=1)
+  env = locomotion_gym_env.LocomotionGymEnv()
 
-  time.sleep(1)
- 
- # Move the motors slowly to initial position
+  # Move the motors slowly to initial position
   robot.ReceiveObservation()
   current_motor_angle = np.array(robot.GetMotorAngles())
   desired_motor_angle = np.array([0., 0.9, -1.8] * 4)
-  for t in tqdm(range(1000)):
-    start_time = time.time()
+  print(desired_motor_angle)
+  for t in tqdm(range(300)):
     blend_ratio = np.minimum(t / 200., 1)
     action = (1 - blend_ratio
               ) * current_motor_angle + blend_ratio * desired_motor_angle
-    print(action)
-    robot.Step(action, robot_config.MotorControlMode.POSITION)
+    env.step(action)
     time.sleep(0.005)
-    print(time.time()-start_time)
-  print('done')
-  time.sleep(5)
-  print('done sleeping')
+
   # Move the legs in a sinusoidal curve
-#  for t in tqdm(range(1000)):
-#    angle_hip = 0.9 + 0.2 * np.sin(2 * np.pi * FREQ * 0.01 * t)
-#    angle_calf = -2 * angle_hip
-#    action = np.array([0., angle_hip, angle_calf] * 4)
-#    robot.Step(action, robot_config.MotorControlMode.POSITION)
-#    time.sleep(0.007)
-#    print(robot.GetFootContacts())
-    # print(robot.GetBaseVelocity())
+  for t in tqdm(range(1000)):
+    angle_hip = 0.9 + 0.2 * np.sin(2 * np.pi * FREQ * 0.01 * t)
+    angle_calf = -2 * angle_hip
+    action = np.array([0., angle_hip, angle_calf, 0., 0.9, -1.8, 0., 0.9, -1.8, 0., 0.9, -1.8])
+    env.step(action)
 
   robot.Terminate()
 

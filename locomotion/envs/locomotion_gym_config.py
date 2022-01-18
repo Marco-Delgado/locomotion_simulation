@@ -28,7 +28,7 @@ class SimulationParameters(object):
   num_action_repeat = attr.ib(type=int, default=33)
   enable_hard_reset = attr.ib(type=bool, default=False)
   enable_rendering = attr.ib(type=bool, default=False)
-  enable_rendering_gui = attr.ib(type=bool, default=False)
+  enable_rendering_gui = attr.ib(type=bool, default=True)
   robot_on_rack = attr.ib(type=bool, default=False)
   camera_distance = attr.ib(type=float, default=1.0)
   camera_yaw = attr.ib(type=float, default=0)

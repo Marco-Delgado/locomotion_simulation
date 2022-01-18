@@ -86,6 +86,7 @@ class Policy(nn.Module):
             value = torch.sum(v, 1).unsqueeze(1)
 
         new_action = dist.mode()
+
         return value, action_log_probs, dist_entropy, rnn_hxs, reward_terms, new_action
 
 
@@ -235,7 +236,7 @@ class MLPBase(NNBase):
             layers = []
             last_size = num_inputs
             for units in mlp_hidden_sizes:
-                layers.append(nn.Linear(last_size, units))
+                layers.append(init_(nn.Linear(last_size, units)))
                 layers.append(nn.ReLU())
                 last_size = units
             nets.append(nn.Sequential(*layers))
@@ -245,7 +246,7 @@ class MLPBase(NNBase):
 
         self.actor, self.critic = nets
 
-        self.critic_linear = nn.Linear(self._hidden_size, reward_terms + 1)
+        self.critic_linear = init_(nn.Linear(self._hidden_size, reward_terms + 1))
 
         self.train()
 

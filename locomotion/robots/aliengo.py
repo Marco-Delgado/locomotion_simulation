@@ -65,11 +65,11 @@ HIP_OFFSETS = np.array([[0.183, -0.047, 0.], [0.183, 0.047, 0.],
                         [-0.183, -0.047, 0.], [-0.183, 0.047, 0.]
                         ]) + COM_OFFSET
 
-ABDUCTION_P_GAIN = 100.0
+ABDUCTION_P_GAIN = 150.0
 ABDUCTION_D_GAIN = 1.
-HIP_P_GAIN = 100.0
+HIP_P_GAIN = 150.0
 HIP_D_GAIN = 2.0
-KNEE_P_GAIN = 100.0
+KNEE_P_GAIN = 150.0
 KNEE_D_GAIN = 2.0
 
 # Bases on the readings from Laikago's default pose.
@@ -81,7 +81,7 @@ LOWER_NAME_PATTERN = re.compile(r"\w+_lower_\w+")
 TOE_NAME_PATTERN = re.compile(r"\w+_toe\d*")
 IMU_NAME_PATTERN = re.compile(r"imu\d*")
 
-URDF_FILENAME = "/home/unitree/locomotion_simulation-master/aliengo/urdf/aliengo.urdf"
+URDF_FILENAME = "/home/marco/Downloads/locomotion_simulation-master/aliengo/urdf/aliengo.urdf"
 
 _BODY_B_FIELD_NUMBER = 2
 _LINK_A_FIELD_NUMBER = 3
@@ -172,7 +172,7 @@ class Aliengo(minitaur.Minitaur):
   # when the replan frequency is low (e.g. using a less beefy CPU).
   MPC_BODY_MASS = 208 / 9.8
   MPC_BODY_INERTIA = np.array((0.017, 0, 0, 0, 0.057, 0, 0, 0, 0.064)) * 4.
-  MPC_BODY_HEIGHT = 0.3
+  MPC_BODY_HEIGHT = 0.5
   MPC_VELOCITY_MULTIPLIER = 0.5
   ACTION_CONFIG = [
       locomotion_gym_config.ScalarField(name="FR_hip_motor",

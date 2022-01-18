@@ -29,6 +29,7 @@ from locomotion.envs.sensors import space_utils
 
 SWITCHED_POSITIONS = [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
 
+
 class LocomotionGymEnv(gym.Env):
   def __init__(self,
                gym_config,
@@ -42,20 +43,7 @@ class LocomotionGymEnv(gym.Env):
     self._is_render = is_render
     self._on_rack = on_rack
 
-    self.observation_space = spaces.Box(
-      low=np.finfo(np.float32).min,
-      high=np.finfo(np.float32).max,
-      shape=(31,),
-      dtype=np.float32,
-    )
-
-    self.action_space = spaces.Box(
-      low=np.finfo(np.float32).min,
-      high=np.finfo(np.float32).max,
-      shape=(12,),
-      dtype=np.float32,
-    )
-
+    # Checks to see if the environment should be rendered or applied in the real world
     if self._is_render:
       self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.GUI)
       pybullet.configureDebugVisualizer(
@@ -64,29 +52,26 @@ class LocomotionGymEnv(gym.Env):
     else:
       self._pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.DIRECT)
     self._pybullet_client.setAdditionalSearchPath(pd.getDataPath())
+
+    # TODO: check if this can be placed inside "if self.is_render"
     if gym_config.simulation_parameters.egl_rendering:
       self._pybullet_client.loadPlugin('eglRendererPlugin')
+
+    self.reset()
+
+  def reset(self,
+            initial_motor_angles=None,
+            reset_duration=0.0, ):
+    self._pybullet_client.resetSimulation()
+    self._pybullet_client.setPhysicsEngineParameter(300 / 10)
+    self._pybullet_client.setTimeStep(0.001)
+    self._pybullet_client.setGravity(0, 0, -10)
 
     self._robot = self._robot_class(
       pybullet_client=self._pybullet_client,
       on_rack=self._on_rack,
       motor_control_mode=self._gym_config.simulation_parameters.motor_control_mode,
     )
-
-    self.reset()
-
-
-  def reset(self,
-            initial_motor_angles=np.array([0,1.17,-2.77]*4),
-            reset_duration=1.0, ):
-    self._pybullet_client.resetSimulation()
-    self._pybullet_client.setPhysicsEngineParameter(300 / 10)
-    self._pybullet_client.setTimeStep(0.001)
-    self._pybullet_client.setGravity(0, 0, -10)
-
-    self._world_dict = {
-      "ground": self._pybullet_client.loadURDF("plane_implicit.urdf")
-    }
 
     self._robot.Reset(reload_urdf=False,
                       default_motor_angles=initial_motor_angles,
@@ -96,60 +81,17 @@ class LocomotionGymEnv(gym.Env):
 
   def step(self, action):
     action = action[SWITCHED_POSITIONS]
+    self._robot.Step(action)
 
-    observations = self._get_observation()
-
-    deltas = []
-    # for i, j in zip(observations[:12], np.array([0, 0.432, -0.77] * 4)):
-    for i, j in zip(observations[:12], np.array([0, 0.9, -1.8] * 4)):
-      err = i - j
-      # Be more precise than necessary
-      if abs(err) > np.deg2rad(10) / 3:
-        # Flip direction based on error
-        coeff = 1 if err < 0 else -1
-        deltas.append(coeff * min(np.deg2rad(10), abs(err)))
-      else:
-        deltas.append(0)
-
-    deltas = np.array(deltas, dtype=np.float32)
-
-    # print("actions: ", action)
-    # deltas = np.clip(action, -1.0, 1.0) * np.deg2rad(5)
-    desired_motor_angle = deltas + observations[:12]
-    # print("observations: ", observations)
-
-    # self._robot.Step(desired_motor_angle, robot_config.MotorControlMode.POSITION)
-    # self._robot.Step(desired_motor_angle)
-    low_timeout = time.time() + 1 / 30
-    count = 0
-    while time.time() < low_timeout:
-      curr_joints = self._get_observation()[:12]
-      deltas = []
-      for i, j in zip(curr_joints, desired_motor_angle):
-        err = i - j
-        # Be more precise than necessary
-        if abs(err) > np.deg2rad(10) / 3:
-          # Flip direction based on error
-          coeff = 1 if err < 0 else -1
-          deltas.append(coeff * min(np.deg2rad(10), abs(err)))
-        else:
-          deltas.append(0)
-      blend_desired_motor_angle = np.array(deltas, dtype=np.float32) + curr_joints
-      self._robot.Step(blend_desired_motor_angle)
-      count += 1
-      print(count)
-
-    return observations, 0, False, {}
+    return self._get_observation(), 0, False, {}
 
   def _get_observation(self):
-    # observations = \
-    #   {
-    #     "joint_pos": self._robot.GetMotorAngles()[SWITCHED_POSITIONS],
-    #     "joint_vel": self._robot.GetMotorVelocities()[SWITCHED_POSITIONS],
-    #     "euler_rot": self._robot.GetBaseRollPitchYaw(),
-    #     "feet_contact": self._robot.GetFootContacts()
-    #   }
-
-    observations = np.array([*self._robot.GetMotorAngles()[SWITCHED_POSITIONS], *self._robot.GetMotorVelocities()[SWITCHED_POSITIONS], *self._robot.GetBaseRollPitchYaw(), *self._robot.GetFootContacts()])
+    observations = \
+      {
+        "joint_pos": self._robot.GetMotorAngles()[SWITCHED_POSITIONS],
+        "joint_vel": self._robot.GetMotorVelocities()[SWITCHED_POSITIONS],
+        "euler_rot": self._robot.GetBaseRollPitchYaw(),
+        "feet_contact": self._robot.GetFootContacts()
+      }
 
     return observations

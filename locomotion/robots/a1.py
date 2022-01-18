@@ -66,7 +66,7 @@ HIP_OFFSETS = np.array([[0.183, -0.047, 0.], [0.183, 0.047, 0.],
                         ]) + COM_OFFSET
 
 ABDUCTION_P_GAIN = 100.0
-ABDUCTION_D_GAIN = 1.0
+ABDUCTION_D_GAIN = 1.
 HIP_P_GAIN = 100.0
 HIP_D_GAIN = 2.0
 KNEE_P_GAIN = 100.0
@@ -81,7 +81,7 @@ LOWER_NAME_PATTERN = re.compile(r"\w+_lower_\w+")
 TOE_NAME_PATTERN = re.compile(r"\w+_toe\d*")
 IMU_NAME_PATTERN = re.compile(r"imu\d*")
 
-URDF_FILENAME = "/home/marco/Downloads/locomotion_simulation-master/aliengo/urdf/aliengo.urdf"
+URDF_FILENAME = "a1/a1.urdf"
 
 _BODY_B_FIELD_NUMBER = 2
 _LINK_A_FIELD_NUMBER = 3
@@ -170,9 +170,9 @@ class A1(minitaur.Minitaur):
   # At high replanning frequency, inaccurate values of BODY_MASS/INERTIA
   # doesn't seem to matter much. However, these values should be better tuned
   # when the replan frequency is low (e.g. using a less beefy CPU).
-  MPC_BODY_MASS = 215 / 9.8
+  MPC_BODY_MASS = 108 / 9.8
   MPC_BODY_INERTIA = np.array((0.017, 0, 0, 0, 0.057, 0, 0, 0, 0.064)) * 4.
-  MPC_BODY_HEIGHT = 0.3
+  MPC_BODY_HEIGHT = 0.24
   MPC_VELOCITY_MULTIPLIER = 0.5
   ACTION_CONFIG = [
       locomotion_gym_config.ScalarField(name="FR_hip_motor",

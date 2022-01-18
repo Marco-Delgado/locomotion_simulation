@@ -64,11 +64,11 @@ _DEFAULT_HIP_POSITIONS = (
     (-0.195, 0.13, 0),
 )
 
-ABDUCTION_P_GAIN = 150.0
+ABDUCTION_P_GAIN = 100.0
 ABDUCTION_D_GAIN = 1.0
-HIP_P_GAIN = 150.0
+HIP_P_GAIN = 100.0
 HIP_D_GAIN = 2.0
-KNEE_P_GAIN = 150.0
+KNEE_P_GAIN = 100.0
 KNEE_D_GAIN = 2.0
 
 COMMAND_CHANNEL_NAME = 'LCM_Low_Cmd'
@@ -95,10 +95,10 @@ _LINK_A_FIELD_NUMBER = 3
 
 class A1Robot(a1.A1):
   """Interface for real A1 robot."""
-  MPC_BODY_MASS = 215 / 9.8
+  MPC_BODY_MASS = 108 / 9.8
   MPC_BODY_INERTIA = np.array((0.24, 0, 0, 0, 0.80, 0, 0, 0, 1.00))
 
-  MPC_BODY_HEIGHT = 0.3
+  MPC_BODY_HEIGHT = 0.24
   ACTION_CONFIG = [
       locomotion_gym_config.ScalarField(name="FR_hip_motor",
                                         upper_bound=0.802851455917,
@@ -304,4 +304,3 @@ class A1Robot(a1.A1):
     self.ApplyAction(action, motor_control_mode)
     self.ReceiveObservation()
     self._state_action_counter += 1
-

@@ -190,4 +190,3 @@ class OpenloopGaitGenerator(gait_generator.GaitGenerator):
           and not contact_state[leg_id]):
         logging.info("lost contact detected.")
         self._leg_state[leg_id] = gait_generator.LegState.LOSE_CONTACT
-

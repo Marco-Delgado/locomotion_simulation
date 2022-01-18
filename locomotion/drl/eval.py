@@ -1,4 +1,4 @@
-from locomotion.a2c_ppo_acktr import model
+from a2c_ppo_acktr import model
 
 from absl import app
 from absl import logging

@@ -229,6 +229,7 @@ class A1(minitaur.Minitaur):
       reset_time=1,
       allow_knee_contact=False,
   ):
+    print('INITIALIZING A1 CLASS')
     self._urdf_filename = urdf_filename
     self._allow_knee_contact = allow_knee_contact
     self._enable_clip_motor_commands = enable_clip_motor_commands
@@ -319,11 +320,11 @@ class A1(minitaur.Minitaur):
     for name in self._joint_name_to_id:
       joint_id = self._joint_name_to_id[name]
       self._pybullet_client.setJointMotorControl2(
-          bodyIndex=self.quadruped,
-          jointIndex=(joint_id),
-          controlMode=self._pybullet_client.VELOCITY_CONTROL,
-          targetVelocity=0,
-          force=0)
+        bodyIndex=self.quadruped,
+        jointIndex=(joint_id),
+        controlMode=self._pybullet_client.VELOCITY_CONTROL,
+        targetVelocity=0,
+        force=0)
     for name, i in zip(MOTOR_NAMES, range(len(MOTOR_NAMES))):
       if "hip_joint" in name:
         angle = INIT_MOTOR_ANGLES[i] + HIP_JOINT_OFFSET

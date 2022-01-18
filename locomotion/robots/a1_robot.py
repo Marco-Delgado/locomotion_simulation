@@ -64,12 +64,15 @@ _DEFAULT_HIP_POSITIONS = (
     (-0.195, 0.13, 0),
 )
 
-ABDUCTION_P_GAIN = 100.0
-ABDUCTION_D_GAIN = 1.0
-HIP_P_GAIN = 100.0
-HIP_D_GAIN = 2.0
-KNEE_P_GAIN = 100.0
-KNEE_D_GAIN = 2.0
+ABDUCTION_P_GAIN = 230.0
+ABDUCTION_D_GAIN = 20.0
+# ABDUCTION_D_GAIN = 1.0
+HIP_P_GAIN = 230.0
+HIP_D_GAIN = 20.0
+# HIP_D_GAIN = 2.0
+KNEE_P_GAIN = 230.0
+KNEE_D_GAIN = 20.0
+# KNEE_D_GAIN = 2.0
 
 COMMAND_CHANNEL_NAME = 'LCM_Low_Cmd'
 STATE_CHANNEL_NAME = 'LCM_Low_State'
@@ -95,10 +98,10 @@ _LINK_A_FIELD_NUMBER = 3
 
 class A1Robot(a1.A1):
   """Interface for real A1 robot."""
-  MPC_BODY_MASS = 108 / 9.8
+  MPC_BODY_MASS = 215 / 9.8
   MPC_BODY_INERTIA = np.array((0.24, 0, 0, 0, 0.80, 0, 0, 0, 1.00))
 
-  MPC_BODY_HEIGHT = 0.24
+  MPC_BODY_HEIGHT = 0.30
   ACTION_CONFIG = [
       locomotion_gym_config.ScalarField(name="FR_hip_motor",
                                         upper_bound=0.802851455917,
@@ -140,12 +143,16 @@ class A1Robot(a1.A1):
 
   def __init__(self, pybullet_client, time_step=0.002, **kwargs):
     """Initializes the robot class."""
+    print('INITIALIZING A1 ROBOT CLASS')
     # Initialize pd gain vector
-    self.motor_kps = np.array([ABDUCTION_P_GAIN, HIP_P_GAIN, KNEE_P_GAIN] * 4)
+    self.motor_kps = np.array([
+        ABDUCTION_P_GAIN*1.0, HIP_P_GAIN*1.0, KNEE_P_GAIN*1.0, ABDUCTION_P_GAIN*1.0,
+        HIP_P_GAIN*1.0, KNEE_P_GAIN*1.0, ABDUCTION_P_GAIN, HIP_P_GAIN*1.0, KNEE_P_GAIN*1.0,
+        ABDUCTION_P_GAIN, HIP_P_GAIN*1.0, KNEE_P_GAIN*1.0
+    ])
     self.motor_kds = np.array([ABDUCTION_D_GAIN, HIP_D_GAIN, KNEE_D_GAIN] * 4)
     self._pybullet_client = pybullet_client
     self.time_step = time_step
-
     # Robot state variables
     self._init_complete = False
     self._base_orientation = None
@@ -271,10 +278,12 @@ class A1Robot(a1.A1):
     """Reset the robot to default motor angles."""
     super(A1Robot, self).Reset(reload_urdf=reload_urdf,
                                default_motor_angles=default_motor_angles,
-                               reset_time=-1)
+                               reset_time=-1,
+                               reset=False)
     logging.warning(
         "About to reset the robot, make sure the robot is hang-up.")
-
+    print('A1 ROBOT RESETTING')
+    '''
     if not default_motor_angles:
       default_motor_angles = a1.INIT_MOTOR_ANGLES
 
@@ -288,6 +297,7 @@ class A1Robot(a1.A1):
           1 - blend_ratio) * current_motor_angles
       self.Step(action, robot_config.MotorControlMode.POSITION)
       time.sleep(self.time_step * self._action_repeat)
+    '''
 
     if self._enable_action_filter:
       self._ResetActionFilter()

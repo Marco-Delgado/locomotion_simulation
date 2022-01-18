@@ -4,6 +4,7 @@ from absl import flags
 from absl import logging
 from datetime import datetime
 import numpy as np
+from tqdm import tqdm
 import os
 import scipy.interpolate
 import time
@@ -74,6 +75,18 @@ _INIT_LEG_STATE = (
     gait_generator_lib.LegState.SWING,
 )
 
+def stand(robot):
+  robot.ReceiveObservation()
+  current_motor_angle = np.array(robot.GetMotorAngles())
+  ## motor angles to get aliengo to stand at 0.5m
+  desired_motor_angle = np.array([0., 0.6, -1.25] * 4)
+  for t in tqdm(range(1000)):
+    blend_ratio = np.minimum(t / 200., 1)
+    action = (1 - blend_ratio
+              ) * current_motor_angle + blend_ratio * desired_motor_angle
+    #print(action)
+    robot.Step(action, robot_config.MotorControlMode.POSITION)
+    time.sleep(0.005)
 
 def _generate_example_linear_angular_speed(t):
   """Creates an example speed profile based on time for demo purpose."""
@@ -145,7 +158,7 @@ def _update_controller_params(controller, lin_speed, ang_speed):
 def main(argv):
   """Runs the locomotion controller example."""
   del argv  # unused
-
+  time.sleep(10)
   # Construct simulator
   if FLAGS.show_gui and not FLAGS.use_real_robot:
     p = bullet_client.BulletClient(connection_mode=pybullet.GUI)
@@ -174,9 +187,17 @@ def main(argv):
                   time_step=0.002,
                   action_repeat=1)
 
+  print('SETTING UP CONTROLLER')
   controller = _setup_controller(robot)
+  print('DONE SETTING UP CONTROLLER')
 
+  time.sleep(5)
   controller.reset()
+  print('CONTROLLER RESET')
+  time.sleep(5)
+  print('ROBOT STANDING')
+  stand(robot)
+
   if FLAGS.use_gamepad:
     gamepad = gamepad_reader.Gamepad()
     command_function = gamepad.get_command

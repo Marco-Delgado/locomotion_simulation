@@ -151,7 +151,7 @@ class Minitaur(object):
       enable_action_filter: Boolean specifying if a lowpass filter should be
         used to smooth actions.
     """
-
+    print('INITIALIZING MINITAUR CLASS')
     self.num_motors = num_motors
     self.num_legs = self.num_motors // dofs_per_leg
     self._pybullet_client = pybullet_client
@@ -391,7 +391,7 @@ class Minitaur(object):
     """
     return True
 
-  def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0):
+  def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0, reset=True):
     """Reset the minitaur to its initial states.
 
     Args:
@@ -404,25 +404,27 @@ class Minitaur(object):
         reset_time <= 0 or in torque control mode, the phase of holding the
         default pose is skipped.
     """
-    if reload_urdf:
-      self._LoadRobotURDF()
-      if self._on_rack:
-        self.rack_constraint = (self._CreateRackConstraint(
-            self._GetDefaultInitPosition(), self._GetDefaultInitOrientation()))
-      self._BuildJointNameToIdDict()
-      self._BuildUrdfIds()
-      self._RemoveDefaultJointDamping()
-      self._BuildMotorIdList()
-      self._RecordMassInfoFromURDF()
-      self._RecordInertiaInfoFromURDF()
-      self.ResetPose(add_constraint=True)
-    else:
-      self._pybullet_client.resetBasePositionAndOrientation(
-          self.quadruped, self._GetDefaultInitPosition(),
-          self._GetDefaultInitOrientation())
-      self._pybullet_client.resetBaseVelocity(self.quadruped, [0, 0, 0],
-                                              [0, 0, 0])
-      self.ResetPose(add_constraint=False)
+    print('MINITAUR RESETTING')
+    if reset:
+      if reload_urdf:
+        self._LoadRobotURDF()
+        if self._on_rack:
+          self.rack_constraint = (self._CreateRackConstraint(
+              self._GetDefaultInitPosition(), self._GetDefaultInitOrientation()))
+        self._BuildJointNameToIdDict()
+        self._BuildUrdfIds()
+        self._RemoveDefaultJointDamping()
+        self._BuildMotorIdList()
+        self._RecordMassInfoFromURDF()
+        self._RecordInertiaInfoFromURDF()
+        self.ResetPose(add_constraint=True)
+      else:
+        self._pybullet_client.resetBasePositionAndOrientation(
+            self.quadruped, self._GetDefaultInitPosition(),
+            self._GetDefaultInitOrientation())
+        self._pybullet_client.resetBaseVelocity(self.quadruped, [0, 0, 0],
+                                                [0, 0, 0])
+        self.ResetPose(add_constraint=False)
 
     self._overheat_counter = np.zeros(self.num_motors)
     self._motor_enabled_list = [True] * self.num_motors
@@ -459,6 +461,7 @@ class Minitaur(object):
         at the end of the reset phase.
       reset_time: The time duration for the reset phase.
     """
+    print('SETTLING DOWN FOR RESET DEFAULT MOTOR ANGLES: ', default_motor_angles, ' RESET TIME: ', reset_time)
     if reset_time <= 0:
       return
     # Important to fill the observation buffer.

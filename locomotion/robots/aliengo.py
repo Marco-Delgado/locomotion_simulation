@@ -81,7 +81,7 @@ LOWER_NAME_PATTERN = re.compile(r"\w+_lower_\w+")
 TOE_NAME_PATTERN = re.compile(r"\w+_toe\d*")
 IMU_NAME_PATTERN = re.compile(r"imu\d*")
 
-URDF_FILENAME = "/home/marco/Downloads/locomotion_simulation-master/aliengo/urdf/aliengo.urdf"
+URDF_FILENAME = "aliengo/urdf/aliengo.urdf"
 
 _BODY_B_FIELD_NUMBER = 2
 _LINK_A_FIELD_NUMBER = 3

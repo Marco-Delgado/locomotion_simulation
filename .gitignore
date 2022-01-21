@@ -1,9 +1,15 @@
+checkpoints
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 .idea/
 logs/
+
+*.pth
+.DS_Store
 
 # C extensions
 *.so

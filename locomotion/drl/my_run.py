@@ -8,12 +8,12 @@ import argparse
 import gym
 from torch.utils.tensorboard import SummaryWriter
 
-from a2c_ppo_acktr import algo, utils
-from a2c_ppo_acktr.vector_env import VectorEnv
-from a2c_ppo_acktr.model import Policy
-from a2c_ppo_acktr.storage import RolloutStorage
+from locomotion.drl.a2c_ppo_acktr import algo, utils
+from locomotion.drl.a2c_ppo_acktr.vector_env import VectorEnv
+from locomotion.drl.a2c_ppo_acktr.model import Policy
+from locomotion.drl.a2c_ppo_acktr.storage import RolloutStorage
 
-from envs.knobs_env import KnobsEnv
+# from envs.knobs_env import KnobsEnv
 
 
 def main():
@@ -43,7 +43,7 @@ def main():
         config.merge_from_list(args.opts)
     config.freeze()
 
-    run(config, KnobsEnv)
+    # run(config, KnobsEnv)
     # run(config, 'MountainCarContinuous-v0')
     # run(config, 'Pendulum-v0')
 

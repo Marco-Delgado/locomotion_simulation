@@ -15,8 +15,8 @@ import pybullet  # pytype:disable=import-error
 import pybullet_data
 from pybullet_utils import bullet_client
 
-from locomotion.robots import a1, aliengo
-from locomotion.robots import a1_robot, aliengo_robot
+from locomotion.robots import aliengo
+from locomotion.robots import aliengo_robot
 from locomotion.robots import robot_config
 FREQ = 0.5
 

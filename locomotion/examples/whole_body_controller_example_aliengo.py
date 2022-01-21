@@ -20,8 +20,8 @@ from locomotion.agents.whole_body_controller import openloop_gait_generator
 from locomotion.agents.whole_body_controller import raibert_swing_leg_controller
 from locomotion.agents.whole_body_controller import torque_stance_leg_controller
 
-from locomotion.robots import a1, aliengo
-from locomotion.robots import a1_robot, aliengo_robot
+from locomotion.robots import aliengo
+from locomotion.robots import aliengo_robot
 from locomotion.robots import robot_config
 from locomotion.robots.gamepad import gamepad_reader
 

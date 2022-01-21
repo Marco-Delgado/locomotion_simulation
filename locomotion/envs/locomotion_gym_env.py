@@ -77,11 +77,15 @@ class LocomotionGymEnv(gym.Env):
                       default_motor_angles=initial_motor_angles,
                       reset_time=reset_duration)
 
+    self._last_true_motor_angle = self._robot.getTrueMotorAngles()
     return self._get_observation()
 
   def step(self, action):
-    action = action[SWITCHED_POSITIONS]
-    self._robot.Step(action)
+    action = np.array(action[SWITCHED_POSITIONS])
+    delta = self._last_true_motor_angle + action
+
+    self._robot.ApplyAction(delta)
+    self._last_true_motor_angle = self._robot.getTrueMotorAngles()
 
     return self._get_observation(), 0, False, {}
 

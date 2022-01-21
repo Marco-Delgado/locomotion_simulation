@@ -66,7 +66,7 @@ HIP_OFFSETS = np.array([[0.183, -0.047, 0.], [0.183, 0.047, 0.],
                         ]) + COM_OFFSET
 
 ABDUCTION_P_GAIN = 150.0
-ABDUCTION_D_GAIN = 1.
+ABDUCTION_D_GAIN = 1.0
 HIP_P_GAIN = 150.0
 HIP_D_GAIN = 2.0
 KNEE_P_GAIN = 150.0

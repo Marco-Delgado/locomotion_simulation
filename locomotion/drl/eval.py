@@ -1,15 +1,14 @@
-from a2c_ppo_acktr import model
+from locomotion.drl.a2c_ppo_acktr import model
 
 from absl import app
 from absl import logging
 import numpy as np
 import pybullet as p  # pytype: disable=import-error
+from tqdm import tqdm
 
 from locomotion.envs import locomotion_gym_config
-from locomotion.envs import env_builder
-from locomotion.robots import a1
-from locomotion.robots import robot_config
-from tqdm import tqdm
+from locomotion.robots import aliengo
+from locomotion.robots import aliengo_robot
 from locomotion.envs import locomotion_gym_env
 
 import argparse
@@ -38,7 +37,7 @@ if __name__ == "__main__":
     """ Create environment """
     env = locomotion_gym_env.LocomotionGymEnv(
     gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params),
-    robot_class=a1.A1,
+    robot_class=aliengo.Aliengo,
     is_render=True,
     on_rack=True
     )

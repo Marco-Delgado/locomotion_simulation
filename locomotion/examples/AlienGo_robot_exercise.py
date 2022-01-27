@@ -18,51 +18,55 @@ from pybullet_utils import bullet_client
 from locomotion.robots import aliengo
 from locomotion.robots import aliengo_robot
 from locomotion.robots import robot_config
+
 FREQ = 0.5
 
 
 def main(_):
-  logging.info(
-      "WARNING: this code executes low-level controller on the robot.")
-  logging.info("Make sure the robot is hang on rack before proceeding.")
-  input("Press enter to continue...")
+    logging.info("WARNING: this code executes low-level controller on the robot.")
+    logging.info("Make sure the robot is hang on rack before proceeding.")
+    input("Press enter to continue...")
 
-  # Construct sim env and real robot
-  p = bullet_client.BulletClient(connection_mode=pybullet.GUI)
-  p.setAdditionalSearchPath(pybullet_data.getDataPath())
-  p.setPhysicsEngineParameter(numSolverIterations=30)
-  p.setTimeStep(0.001)
-  p.setGravity(0, 0, -9.8)
-  p.setPhysicsEngineParameter(enableConeFriction=0)
-  p.setAdditionalSearchPath(pybullet_data.getDataPath())
-  p.loadURDF("plane.urdf")
-  robot = aliengo_robot.AliengoRobot(p,
-                  motor_control_mode=robot_config.MotorControlMode.HYBRID,
-                  enable_action_interpolation=False,
-                  reset_time=2,
-                  time_step=0.002,
-                  action_repeat=1)
+    # Construct sim env and real robot
+    p = bullet_client.BulletClient(connection_mode=pybullet.DIRECT)
+    p.setAdditionalSearchPath(pybullet_data.getDataPath())
+    p.setPhysicsEngineParameter(numSolverIterations=30)
+    p.setTimeStep(0.001)
+    p.setGravity(0, 0, -9.8)
+    p.setPhysicsEngineParameter(enableConeFriction=0)
+    p.setAdditionalSearchPath(pybullet_data.getDataPath())
+    p.loadURDF("plane.urdf")
+    robot = aliengo_robot.AliengoRobot(
+        p,
+        motor_control_mode=robot_config.MotorControlMode.HYBRID,
+        enable_action_interpolation=False,
+        reset_time=2,
+        time_step=0.002,
+        action_repeat=1,
+    )
 
-  # Move the motors slowly to initial position
-  robot.ReceiveObservation()
-  current_motor_angle = np.array(robot.GetMotorAngles())
-  desired_motor_angle = np.array([0., 0.9, -1.8] * 4)
-  for t in tqdm(range(600)):
-    blend_ratio = np.minimum(t / 200., 1)
-    action = (1 - blend_ratio
-              ) * current_motor_angle + blend_ratio * desired_motor_angle
-    robot.Step(action, robot_config.MotorControlMode.POSITION)
-    time.sleep(0.005)
+    # Move the motors slowly to initial position
+    robot.ReceiveObservation()
+    current_motor_angle = np.array(robot.GetMotorAngles())
+    desired_motor_angle = np.array([0.0, 0.9, -1.8] * 4)
+    for t in tqdm(range(600)):
+        blend_ratio = np.minimum(t / 200.0, 1)
+        action = (
+            1 - blend_ratio
+        ) * current_motor_angle + blend_ratio * desired_motor_angle
+        robot.Step(action, robot_config.MotorControlMode.POSITION)
+        time.sleep(0.005)
 
-  # Move the legs in a sinusoidal curve
-  for t in tqdm(range(1000)):
-    angle_hip = 0.9 + 0.2 * np.sin(2 * np.psi * FREQ * 0.01 * t)
-    angle_calf = -2 * angle_hip
-    action = np.array([0., angle_hip, angle_calf] * 4)
-    robot.Step(action, robot_config.MotorControlMode.POSITION)
-    time.sleep(0.007)
+    # Move the legs in a sinusoidal curve
+    for t in tqdm(range(1000)):
+        angle_hip = 0.9 + 0.2 * np.sin(2 * np.pi * FREQ * 0.01 * t)
+        angle_calf = -2 * angle_hip
+        action = np.array([0.0, angle_hip, angle_calf] * 4)
+        robot.Step(action, robot_config.MotorControlMode.POSITION)
+        time.sleep(0.007)
 
-  robot.Terminate()
+    robot.Terminate()
 
-if __name__ == '__main__':
-  app.run(main)
+
+if __name__ == "__main__":
+    app.run(main)

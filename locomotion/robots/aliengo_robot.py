@@ -53,7 +53,8 @@ UPPER_LEG_JOINT_OFFSET = 0.0
 KNEE_JOINT_OFFSET = 0.0
 DOFS_PER_LEG = 3
 JOINT_OFFSETS = np.array(
-    [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4)
+    [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4
+)
 PI = math.pi
 
 MAX_MOTOR_ANGLE_CHANGE_PER_STEP = 0.2
@@ -64,22 +65,25 @@ _DEFAULT_HIP_POSITIONS = (
     (-0.195, 0.13, 0),
 )
 
-ABDUCTION_P_GAIN = 150.0
-ABDUCTION_D_GAIN = 1.0
-HIP_P_GAIN = 150.0
-HIP_D_GAIN = 2.0
-KNEE_P_GAIN = 150.0
-KNEE_D_GAIN = 2.0
+ABDUCTION_P_GAIN = 230.0
+ABDUCTION_D_GAIN = 20.0
+HIP_P_GAIN = 230.0
+HIP_D_GAIN = 20.0
+KNEE_P_GAIN = 230.0
+KNEE_D_GAIN = 20.0
 
-COMMAND_CHANNEL_NAME = 'LCM_Low_Cmd'
-STATE_CHANNEL_NAME = 'LCM_Low_State'
+COMMAND_CHANNEL_NAME = "LCM_Low_Cmd"
+STATE_CHANNEL_NAME = "LCM_Low_State"
 
 # Bases on the readings from Laikago's default pose.
-INIT_MOTOR_ANGLES = np.array([
-                                 laikago_pose_utils.LAIKAGO_DEFAULT_ABDUCTION_ANGLE,
-                                 laikago_pose_utils.LAIKAGO_DEFAULT_HIP_ANGLE,
-                                 laikago_pose_utils.LAIKAGO_DEFAULT_KNEE_ANGLE
-                             ] * NUM_LEGS)
+INIT_MOTOR_ANGLES = np.array(
+    [
+        laikago_pose_utils.LAIKAGO_DEFAULT_ABDUCTION_ANGLE,
+        laikago_pose_utils.LAIKAGO_DEFAULT_HIP_ANGLE,
+        laikago_pose_utils.LAIKAGO_DEFAULT_KNEE_ANGLE,
+    ]
+    * NUM_LEGS
+)
 
 HIP_NAME_PATTERN = re.compile(r"\w+_hip_\w+")
 UPPER_NAME_PATTERN = re.compile(r"\w+_upper_\w+")
@@ -95,47 +99,56 @@ _LINK_A_FIELD_NUMBER = 3
 
 class AliengoRobot(aliengo.Aliengo):
     """Interface for real A1 robot."""
+
     MPC_BODY_MASS = 215 / 9.8
     MPC_BODY_INERTIA = np.array((0.24, 0, 0, 0, 0.80, 0, 0, 0, 1.00))
 
     MPC_BODY_HEIGHT = 0.3
     ACTION_CONFIG = [
-        locomotion_gym_config.ScalarField(name="FR_hip_motor",
-                                          upper_bound=0.802851455917,
-                                          lower_bound=-0.802851455917),
-        locomotion_gym_config.ScalarField(name="FR_upper_joint",
-                                          upper_bound=4.18879020479,
-                                          lower_bound=-1.0471975512),
-        locomotion_gym_config.ScalarField(name="FR_lower_joint",
-                                          upper_bound=-0.916297857297,
-                                          lower_bound=-2.69653369433),
-        locomotion_gym_config.ScalarField(name="FL_hip_motor",
-                                          upper_bound=0.802851455917,
-                                          lower_bound=-0.802851455917),
-        locomotion_gym_config.ScalarField(name="FL_upper_joint",
-                                          upper_bound=4.18879020479,
-                                          lower_bound=-1.0471975512),
-        locomotion_gym_config.ScalarField(name="FL_lower_joint",
-                                          upper_bound=-0.916297857297,
-                                          lower_bound=-2.69653369433),
-        locomotion_gym_config.ScalarField(name="RR_hip_motor",
-                                          upper_bound=0.802851455917,
-                                          lower_bound=-0.802851455917),
-        locomotion_gym_config.ScalarField(name="RR_upper_joint",
-                                          upper_bound=4.18879020479,
-                                          lower_bound=-1.0471975512),
-        locomotion_gym_config.ScalarField(name="RR_lower_joint",
-                                          upper_bound=-0.916297857297,
-                                          lower_bound=-2.69653369433),
-        locomotion_gym_config.ScalarField(name="RL_hip_motor",
-                                          upper_bound=0.802851455917,
-                                          lower_bound=-0.802851455917),
-        locomotion_gym_config.ScalarField(name="RL_upper_joint",
-                                          upper_bound=4.18879020479,
-                                          lower_bound=-1.0471975512),
-        locomotion_gym_config.ScalarField(name="RL_lower_joint",
-                                          upper_bound=-0.916297857297,
-                                          lower_bound=-2.69653369433),
+        locomotion_gym_config.ScalarField(
+            name="FR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
+        ),
+        locomotion_gym_config.ScalarField(
+            name="FR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
+        ),
+        locomotion_gym_config.ScalarField(
+            name="FR_lower_joint",
+            upper_bound=-0.916297857297,
+            lower_bound=-2.69653369433,
+        ),
+        locomotion_gym_config.ScalarField(
+            name="FL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
+        ),
+        locomotion_gym_config.ScalarField(
+            name="FL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
+        ),
+        locomotion_gym_config.ScalarField(
+            name="FL_lower_joint",
+            upper_bound=-0.916297857297,
+            lower_bound=-2.69653369433,
+        ),
+        locomotion_gym_config.ScalarField(
+            name="RR_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
+        ),
+        locomotion_gym_config.ScalarField(
+            name="RR_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
+        ),
+        locomotion_gym_config.ScalarField(
+            name="RR_lower_joint",
+            upper_bound=-0.916297857297,
+            lower_bound=-2.69653369433,
+        ),
+        locomotion_gym_config.ScalarField(
+            name="RL_hip_motor", upper_bound=0.802851455917, lower_bound=-0.802851455917
+        ),
+        locomotion_gym_config.ScalarField(
+            name="RL_upper_joint", upper_bound=4.18879020479, lower_bound=-1.0471975512
+        ),
+        locomotion_gym_config.ScalarField(
+            name="RL_lower_joint",
+            upper_bound=-0.916297857297,
+            lower_bound=-2.69653369433,
+        ),
     ]
 
     def __init__(self, pybullet_client, time_step=0.002, **kwargs):
@@ -155,25 +168,22 @@ class AliengoRobot(aliengo.Aliengo):
         self._motor_velocities = np.zeros(12)
         self._joint_states = None
         self._last_reset_time = time.time()
-        self._velocity_estimator = a1_robot_velocity_estimator.VelocityEstimator(
-            self)
+        self._velocity_estimator = a1_robot_velocity_estimator.VelocityEstimator(self)
 
         # Initiate UDP for robot state and actions
         self._robot_interface = RobotInterface()
         self._robot_interface.send_command(np.zeros(60, dtype=np.float32))
 
-        kwargs['on_rack'] = True
-        super(AliengoRobot, self).__init__(pybullet_client,
-                                           time_step=time_step,
-                                           **kwargs)
+        kwargs["on_rack"] = True
+        super(AliengoRobot, self).__init__(pybullet_client, time_step=time_step, **kwargs)
         self._init_complete = True
 
     def ReceiveObservation(self):
         """Receives observation from robot.
 
-    Synchronous ReceiveObservation is not supported in A1,
-    so changging it to noop instead.
-    """
+        Synchronous ReceiveObservation is not supported in A1,
+        so changging it to noop instead.
+        """
         state = self._robot_interface.receive_observation()
         self._raw_state = state
         # Convert quaternion from wxyz to xyzw, which is default for Pybullet.
@@ -182,21 +192,22 @@ class AliengoRobot(aliengo.Aliengo):
         rpy = state.imu.rpy
         self._base_orientation_rpy = np.array([rpy[0], rpy[1], rpy[2]])
         self._motor_angles = np.array([motor.q for motor in state.motorState[:12]])
-        self._motor_velocities = np.array(
-            [motor.dq for motor in state.motorState[:12]])
+        self._motor_velocities = np.array([motor.dq for motor in state.motorState[:12]])
         self._joint_states = np.array(
-            list(zip(self._motor_angles, self._motor_velocities)))
+            list(zip(self._motor_angles, self._motor_velocities))
+        )
         if self._init_complete:
             # self._SetRobotStateInSim(self._motor_angles, self._motor_velocities)
             self._velocity_estimator.update(self._raw_state)
 
     def _SetRobotStateInSim(self, motor_angles, motor_velocities):
         self._pybullet_client.resetBasePositionAndOrientation(
-            self.quadruped, self.GetBasePosition(), self.GetBaseOrientation())
+            self.quadruped, self.GetBasePosition(), self.GetBaseOrientation()
+        )
         for i, motor_id in enumerate(self._motor_id_list):
-            self._pybullet_client.resetJointState(self.quadruped, motor_id,
-                                                  motor_angles[i],
-                                                  motor_velocities[i])
+            self._pybullet_client.resetJointState(
+                self.quadruped, motor_id, motor_angles[i], motor_velocities[i]
+            )
 
     def GetTrueMotorAngles(self):
         return self._motor_angles.copy()
@@ -208,8 +219,7 @@ class AliengoRobot(aliengo.Aliengo):
         return self._motor_velocities.copy()
 
     def GetBasePosition(self):
-        return self._pybullet_client.getBasePositionAndOrientation(
-            self.quadruped)[0]
+        return self._pybullet_client.getBasePositionAndOrientation(self.quadruped)[0]
 
     def GetBaseRollPitchYaw(self):
         return self._base_orientation_rpy
@@ -242,11 +252,11 @@ class AliengoRobot(aliengo.Aliengo):
     def ApplyAction(self, motor_commands):
         """Clips and then apply the motor commands using the motor model.
 
-    Args:
-      motor_commands: np.array. Can be motor angles, torques, hybrid commands,
-        or motor pwms (for Minitaur only).
-      motor_control_mode: A MotorControlMode enum.
-    """
+        Args:
+          motor_commands: np.array. Can be motor angles, torques, hybrid commands,
+            or motor pwms (for Minitaur only).
+          motor_control_mode: A MotorControlMode enum.
+        """
         command = np.zeros(60, dtype=np.float32)
         for motor_id in range(NUM_MOTORS):
             command[motor_id * 5] = motor_commands[motor_id]
@@ -257,11 +267,12 @@ class AliengoRobot(aliengo.Aliengo):
 
     def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0):
         """Reset the robot to default motor angles."""
-        super(AliengoRobot, self).Reset(reload_urdf=reload_urdf,
-                                        default_motor_angles=default_motor_angles,
-                                        reset_time=-1)
-        logging.warning(
-            "About to reset the robot, make sure the robot is hang-up.")
+        super(AliengoRobot, self).Reset(
+            reload_urdf=reload_urdf,
+            default_motor_angles=default_motor_angles,
+            reset_time=-1,
+        )
+        logging.warning("About to reset the robot, make sure the robot is hang-up.")
 
         if not default_motor_angles:
             default_motor_angles = aliengo.INIT_MOTOR_ANGLES
@@ -272,8 +283,10 @@ class AliengoRobot(aliengo.Aliengo):
         standup_time = min(reset_time, 1.5)
         for t in np.arange(0, reset_time, self.time_step * self._action_repeat):
             blend_ratio = min(t / standup_time, 1)
-            action = blend_ratio * default_motor_angles + (
-                    1 - blend_ratio) * current_motor_angles
+            action = (
+                blend_ratio * default_motor_angles
+                + (1 - blend_ratio) * current_motor_angles
+            )
             self.Step(action, robot_config.MotorControlMode.POSITION)
             time.sleep(self.time_step * self._action_repeat)
 
@@ -289,6 +302,6 @@ class AliengoRobot(aliengo.Aliengo):
         self._is_alive = False
 
     def _StepInternal(self, action, motor_control_mode=None):
-        self.ApplyAction(action, motor_control_mode)
+        self.ApplyAction(action)
         self.ReceiveObservation()
         self._state_action_counter += 1

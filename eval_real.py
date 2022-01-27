@@ -36,16 +36,18 @@ if __name__ == "__main__":
 
     """ Create environment """
     env = locomotion_gym_env.LocomotionGymEnv(
-    gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params),
-    robot_class=aliengo.Aliengo,
-    is_render=True,
-    on_rack=True
+        gym_config=locomotion_gym_config.LocomotionGymConfig(
+            simulation_parameters=sim_params
+        ),
+        robot_class=aliengo_robot.AliengoRobot,
+        is_render=False,
+        on_rack=True,
     )
 
     """ Create actor-critic """
-    num_reward_terms = checkpoint["state_dict"][
-        "actor_critic.base.critic_linear.bias"
-    ].shape[0] - 1
+    num_reward_terms = (
+        checkpoint["state_dict"]["actor_critic.base.critic_linear.bias"].shape[0] - 1
+    )
     actor_critic = model.Policy(
         env.observation_space.shape,
         env.action_space,
@@ -57,9 +59,8 @@ if __name__ == "__main__":
         },
     )
     print("\nActor-critic architecture:")
-    print(actor_critic)
     device = torch.device("cuda:0" if config.CUDA else "cpu")
-    actor_critic.to(device)
+    actor_critic  # .to(device)
 
     """ Load weights """
     actor_critic.load_state_dict(
@@ -73,30 +74,28 @@ if __name__ == "__main__":
     """ Execute episodes """
     num_episodes = 1
     for idx in range(num_episodes):
-        observations = env.reset()
+        print("eval_real call env.reset")
+        observations = env._get_observation()
+        observations = np.concatenate(list(observations.values()))
         recurrent_hidden_states = torch.zeros(
             1,
             actor_critic.base.recurrent_hidden_state_size,
             config.RL.PPO.hidden_size,
-            device=device,
+            # device=device,
         )
-        not_done = torch.ones(1, 1).to(device)
+        not_done = torch.ones(1, 1)  # .to(device)
         step_count = 0
         while not_done[0]:
             step_count += 1
-            (
-                _,
-                action,
-                _,
-                recurrent_hidden_states,
-            ) = actor_critic.act(
-                torch.FloatTensor(observations).unsqueeze(0).to(device),
+
+            (_, action, _, recurrent_hidden_states,) = actor_critic.act(
+                torch.FloatTensor(observations).unsqueeze(0),  # .to(device),
                 recurrent_hidden_states,
                 not_done,
-                deterministic=True
+                deterministic=True,
             )
 
             observations, _, done, _ = env.step(action[0].detach().cpu().numpy())
             not_done[0] = not done
 
-        print(f'Episode #{idx + 1} finished in {step_count} steps')
+        print(f"Episode #{idx + 1} finished in {step_count} steps")

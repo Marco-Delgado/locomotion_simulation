@@ -69,11 +69,11 @@ class LocomotionGymEnv(gym.Env):
         if gym_config.simulation_parameters.egl_rendering:
             self._pybullet_client.loadPlugin("eglRendererPlugin")
 
-        self.reset()
+        self.reset(initial_motor_angles=np.array([0, 0, 0] * 4))
 
     def reset(
         self,
-        initial_motor_angles=None,
+        initial_motor_angles=np.array([0, 0, 0] * 4),
         reset_duration=0.0,
     ):
         self._pybullet_client.resetSimulation()
@@ -95,9 +95,7 @@ class LocomotionGymEnv(gym.Env):
             reset_time=reset_duration,
         )
 
-        self._last_true_motor_angle = np.array(
-            self._robot.GetMotorAngles()
-        )
+        self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
         observations = self._get_observation()
         observations = np.concatenate(list(observations.values()))
         return observations
@@ -113,7 +111,9 @@ class LocomotionGymEnv(gym.Env):
         # Clip actions and scale
         delta = np.clip(delta, -1.0, 1.0) * np.deg2rad(10)
 
-        self._last_true_motor_angle = np.array(self._robot.GetMotorAngles()[SWITCHED_POSITIONS])
+        self._last_true_motor_angle = np.array(
+            self._robot.GetMotorAngles()[SWITCHED_POSITIONS]
+        )
 
         self._robot.Step(delta)
 
@@ -127,7 +127,7 @@ class LocomotionGymEnv(gym.Env):
             "joint_pos": self._robot.GetMotorAngles()[SWITCHED_POSITIONS],
             "joint_vel": self._robot.GetMotorVelocities()[SWITCHED_POSITIONS],
             "euler_rot": self._robot.GetBaseRollPitchYaw()[0:2],
-            "feet_contact": [1, 1, 1, 1]  # self._robot.GetFootContacts(),
+            "feet_contact": [1, 1, 1, 1],  # self._robot.GetFootContacts(),
         }
 
         return observations

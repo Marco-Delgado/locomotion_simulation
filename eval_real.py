@@ -3,6 +3,7 @@ from drl.a2c_ppo_acktr import model
 from absl import app
 from absl import logging
 import numpy as np
+import time
 import pybullet as p  # pytype: disable=import-error
 from tqdm import tqdm
 
@@ -85,6 +86,7 @@ if __name__ == "__main__":
         not_done = torch.ones(1, 1)  # .to(device)
         step_count = 0
         while not_done[0]:
+            start_time = time.time()
             step_count += 1
 
             (_, action, _, recurrent_hidden_states,) = actor_critic.act(
@@ -96,5 +98,8 @@ if __name__ == "__main__":
 
             observations, _, done, _ = env.step(action[0].detach().cpu().numpy())
             not_done[0] = not done
+
+            while time.time() < start_time + 1 / 30:
+                pass
 
         print(f"Episode #{idx + 1} finished in {step_count} steps")

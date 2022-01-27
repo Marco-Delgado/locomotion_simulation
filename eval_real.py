@@ -74,7 +74,6 @@ if __name__ == "__main__":
     """ Execute episodes """
     num_episodes = 1
     for idx in range(num_episodes):
-        print("eval_real call env.reset")
         observations = env._get_observation()
         observations = np.concatenate(list(observations.values()))
         recurrent_hidden_states = torch.zeros(

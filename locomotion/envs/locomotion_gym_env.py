@@ -94,7 +94,6 @@ class LocomotionGymEnv(gym.Env):
             default_motor_angles=initial_motor_angles,
             reset_time=reset_duration,
         )
-        print("after _robot.Reset")
 
         self._last_true_motor_angle = np.array(
             self._robot.GetMotorAngles()
@@ -107,7 +106,14 @@ class LocomotionGymEnv(gym.Env):
         action = np.array(action[SWITCHED_POSITIONS])
 
         delta = self._last_true_motor_angle + action
-        self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
+
+        for i, d in enumerate(delta):
+            if abs(d) <= 0.1:
+                delta[i] = 0
+        # Clip actions and scale
+        delta = np.clip(delta, -1.0, 1.0) * np.deg2rad(10)
+
+        self._last_true_motor_angle = np.array(self._robot.GetMotorAngles()[SWITCHED_POSITIONS])
 
         self._robot.Step(delta)
 

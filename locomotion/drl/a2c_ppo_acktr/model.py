@@ -2,7 +2,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from locomotion.drl.a2c_ppo_acktr.distributions import Bernoulli, Categorical, DiagGaussian2
+from locomotion.drl.a2c_ppo_acktr.distributions import (
+    Bernoulli,
+    Categorical,
+    DiagGaussian2,
+)
 from locomotion.drl.a2c_ppo_acktr.utils import init
 
 

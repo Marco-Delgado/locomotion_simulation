@@ -15,7 +15,7 @@ import quaternion
 from gym import Space, spaces
 from habitat.config import Config as CN
 from habitat.core.registry import registry
-from habitat.core.simulator import (Config, Simulator)
+from habitat.core.simulator import Config, Simulator
 from habitat.core.utils import try_cv2_import
 from PIL import Image
 from typing import Any
@@ -31,9 +31,10 @@ from robot_interface import RobotInterface
 
 
 ##uses spot api change to aliengo
-#python api to control robot
+# python api to control robot
 
 cv2 = try_cv2_import()
+
 
 def _aliengo_base_action_space():
     return spaces.Dict(
@@ -42,11 +43,13 @@ def _aliengo_base_action_space():
         }
     )
 
+
 ACTION_SPACES = {
     "ALIENGO": {
         "BASE_ACTIONS": _aliengo_base_action_space(),
     }
 }
+
 
 class Aliengo(object):
     r"""Simulator wrapper over PyRobot.
@@ -64,8 +67,8 @@ class Aliengo(object):
     """
 
     def __init__(self, config):
-        self._config = config['ALIENGO']
-        
+        self._config = config["ALIENGO"]
+
         # robot_sensors = []
         # for sensor_name in self._config.SENSORS:
         #     sensor_cfg = getattr(self._config, sensor_name)
@@ -85,18 +88,18 @@ class Aliengo(object):
         # assert (
         #     self._config.ROBOT in self._config.ROBOTS
         # ), "Invalid robot type {}".format(self._config.ROBOT)
-        self._robot_config = getattr(self._config, self._config['ROBOT'].upper())
+        self._robot_config = getattr(self._config, self._config["ROBOT"].upper())
 
         action_spaces_dict = {}
 
-        #TODO FIX
+        # TODO FIX
         self._action_space = self._robot_action_space(
-            self._config['ROBOT'], self._robot_config
+            self._config["ROBOT"], self._robot_config
         )
 
         aliengo_config = self._robot_config
-  
-        #bosdyn.client.util.setup_logging(config.verbose)
+
+        # bosdyn.client.util.setup_logging(config.verbose)
 
         # # # # self.sdk = bosdyn.client.create_standard_sdk("Habitat2Spot")
 
@@ -105,21 +108,6 @@ class Aliengo(object):
 
     def GetMotorAngles(self):
         return self._robot.GetMotorAngles(self)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def verify_estop(self):
         """Verify the robot is not estopped"""
@@ -136,9 +124,7 @@ class Aliengo(object):
     def _robot_action_space(self, robot_type, robot_config):
         action_spaces_dict = {}
         for action in robot_config.ACTIONS:
-            action_spaces_dict[action] = ACTION_SPACES[robot_type.upper()][
-                action
-            ]
+            action_spaces_dict[action] = ACTION_SPACES[robot_type.upper()][action]
         return spaces.Dict(action_spaces_dict)
 
     @property
@@ -154,49 +140,46 @@ class Aliengo(object):
         self._robot.logger.info("Robot safely powered off.")
 
     def step(self, action, action_params):
-        r"""Step in reality. 
-        """
+        r"""Step in reality."""
         robot = self._robot
         robot.Step(self, action, action_params)
 
         step_time = time.time()
         vel_end_time = 0.2
-        x_vel, y_vel, z_vel, ang_vel = action_params['xyt_vel']
+        x_vel, y_vel, z_vel, ang_vel = action_params["xyt_vel"]
 
         vision_tform_body = get_vision_tform_body(
-                    self.state_client.get_robot_state().kinematic_state.transforms_snapshot
-                )
-        body_tform_goal = math_helpers.SE2Velocity(
-            x=x_vel, y=y_vel, angular=ang_vel
+            self.state_client.get_robot_state().kinematic_state.transforms_snapshot
         )
+        body_tform_goal = math_helpers.SE2Velocity(x=x_vel, y=y_vel, angular=ang_vel)
         robot_cmd = RobotCommandBuilder.synchro_velocity_command(
             v_x=body_tform_goal.linear_velocity_x,
             v_y=body_tform_goal.linear_velocity_y,
             v_rot=body_tform_goal.angular_velocity,
             frame_name=BODY_FRAME_NAME,
-            params=self.obstacle_params
+            params=self.obstacle_params,
         )
         start_time = time.time()
         self.command_client.robot_command(
             lease=None, command=robot_cmd, end_time_secs=time.time() + vel_end_time
         )
-        while not time.time() > start_time+ vel_end_time:
+        while not time.time() > start_time + vel_end_time:
             pass
         agent_state = self.get_agent_state()
         base_state = agent_state["base"]
         vel = agent_state["vel"]
         print("Actual Position: ", base_state)
         print("Actual Velocity: ", vel)
-        print('Total Time: ', time.time() - step_time, 'Command Time: ', vel_end_time)
+        print("Total Time: ", time.time() - step_time, "Command Time: ", vel_end_time)
 
-    def get_agent_state(
-        self, agent_id: int = 0, base_state_type: str = "odom"
-    ):
+    def get_agent_state(self, agent_id: int = 0, base_state_type: str = "odom"):
         assert agent_id == 0, "No support of multi agent in {} yet.".format(
             self.__class__.__name__
         )
         agent_kinematic_state_bos = self.state_client.get_robot_state().kinematic_state
-        agent_state_bos = get_vision_tform_body(agent_kinematic_state_bos.transforms_snapshot)
+        agent_state_bos = get_vision_tform_body(
+            agent_kinematic_state_bos.transforms_snapshot
+        )
         agent_state_bos_vel_vis = agent_kinematic_state_bos.velocity_of_body_in_vision
         rot = agent_state_bos.rotation
         position = [agent_state_bos.x, agent_state_bos.y, agent_state_bos.z]
@@ -205,17 +188,21 @@ class Aliengo(object):
         yaw = as_angles[0]
 
         state = {
-            "base" : position[:2] + [yaw],
-            "pos" : position,
-            "quat" : rot_quats,
-            "rpy" : as_angles,
-            "vel": [agent_state_bos_vel_vis.linear.x, agent_state_bos_vel_vis.linear.y, agent_state_bos_vel_vis.angular.z]
+            "base": position[:2] + [yaw],
+            "pos": position,
+            "quat": rot_quats,
+            "rpy": as_angles,
+            "vel": [
+                agent_state_bos_vel_vis.linear.x,
+                agent_state_bos_vel_vis.linear.y,
+                agent_state_bos_vel_vis.angular.z,
+            ],
         }
         return state
 
     def seed(self, seed):
         raise NotImplementedError("No support for seeding in reality")
-    
+
     def close(self):
         self.power_off()
         self.lease_alive.shutdown()

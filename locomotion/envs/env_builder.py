@@ -15,7 +15,9 @@
 """Utilities for building environments."""
 from locomotion.envs import locomotion_gym_env
 from locomotion.envs import locomotion_gym_config
-from locomotion.envs.env_wrappers import observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper
+from locomotion.envs.env_wrappers import (
+    observation_dictionary_to_array_wrapper as obs_dict_to_array_wrapper,
+)
 from locomotion.envs.env_wrappers import trajectory_generator_wrapper_env
 from locomotion.envs.env_wrappers import simple_openloop
 from locomotion.envs.env_wrappers import simple_forward_task
@@ -25,51 +27,57 @@ from locomotion.robots import laikago
 from locomotion.robots import robot_config
 
 
-def build_regular_env(robot_class,
-                      motor_control_mode,
-                      enable_rendering=False,
-                      on_rack=False,
-                      action_limit=(0.75, 0.75, 0.75),
-                      wrap_trajectory_generator=True):
+def build_regular_env(
+    robot_class,
+    motor_control_mode,
+    enable_rendering=False,
+    on_rack=False,
+    action_limit=(0.75, 0.75, 0.75),
+    wrap_trajectory_generator=True,
+):
 
-  sim_params = locomotion_gym_config.SimulationParameters()
-  sim_params.enable_rendering = enable_rendering
-  sim_params.motor_control_mode = motor_control_mode
-  sim_params.reset_time = 2
-  sim_params.num_action_repeat = 10
-  sim_params.enable_action_interpolation = False
-  sim_params.enable_action_filter = False
-  sim_params.enable_clip_motor_commands = False
-  sim_params.robot_on_rack = on_rack
+    sim_params = locomotion_gym_config.SimulationParameters()
+    sim_params.enable_rendering = enable_rendering
+    sim_params.motor_control_mode = motor_control_mode
+    sim_params.reset_time = 2
+    sim_params.num_action_repeat = 10
+    sim_params.enable_action_interpolation = False
+    sim_params.enable_action_filter = False
+    sim_params.enable_clip_motor_commands = False
+    sim_params.robot_on_rack = on_rack
 
-  gym_config = locomotion_gym_config.LocomotionGymConfig(
-      simulation_parameters=sim_params)
+    gym_config = locomotion_gym_config.LocomotionGymConfig(
+        simulation_parameters=sim_params
+    )
 
-  sensors = [
-      robot_sensors.BaseDisplacementSensor(),
-      robot_sensors.IMUSensor(),
-      robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
-  ]
+    sensors = [
+        robot_sensors.BaseDisplacementSensor(),
+        robot_sensors.IMUSensor(),
+        robot_sensors.MotorAngleSensor(num_motors=a1.NUM_MOTORS),
+    ]
 
-  task = simple_forward_task.SimpleForwardTask()
+    task = simple_forward_task.SimpleForwardTask()
 
-  env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config,
-                                            robot_class=robot_class,
-                                            robot_sensors=sensors,
-                                            task=task)
+    env = locomotion_gym_env.LocomotionGymEnv(
+        gym_config=gym_config, robot_class=robot_class, robot_sensors=sensors, task=task
+    )
 
-  env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(
-      env)
-  if (motor_control_mode
-      == robot_config.MotorControlMode.POSITION) and wrap_trajectory_generator:
-    if robot_class == laikago.Laikago:
-      env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
-          env,
-          trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
-              action_limit=action_limit))
-    elif robot_class == a1.A1:
-      env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
-          env,
-          trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
-              action_limit=action_limit))
-  return env
+    env = obs_dict_to_array_wrapper.ObservationDictionaryToArrayWrapper(env)
+    if (
+        motor_control_mode == robot_config.MotorControlMode.POSITION
+    ) and wrap_trajectory_generator:
+        if robot_class == laikago.Laikago:
+            env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
+                env,
+                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
+                    action_limit=action_limit
+                ),
+            )
+        elif robot_class == a1.A1:
+            env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(
+                env,
+                trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(
+                    action_limit=action_limit
+                ),
+            )
+    return env

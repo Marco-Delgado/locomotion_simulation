@@ -91,7 +91,7 @@ def run(config, env_class):
             "hidden_size": config.RL.PPO.hidden_size,
         },
     )
-    print('Actor-critic architecture:')
+    print("Actor-critic architecture:")
     print(actor_critic)
     actor_critic.to(device)
 

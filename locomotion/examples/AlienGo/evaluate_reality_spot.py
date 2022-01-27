@@ -14,7 +14,8 @@ from PIL import Image
 from spot_config import get_spot_config
 from spot_sim import *
 import utils
-sys.path.insert(0, '/home/spot/camera_ws/src/spot_ros/src')
+
+sys.path.insert(0, "/home/spot/camera_ws/src/spot_ros/src")
 from camera import collect_images
 import rospy
 
@@ -22,6 +23,7 @@ DEVICE = torch.device("cpu")
 
 LOG_FILENAME = "exp.navigation.log"
 MAX_DEPTH = 10.0
+
 
 class NavEnv:
     def __init__(self):
@@ -50,19 +52,19 @@ class NavEnv:
 
     def _get_base_state(self):
         state = self._reality.get_agent_state()
-        base_state = np.array(state['base'], dtype=np.float32)
-        print('base_state: ', base_state)
+        base_state = np.array(state["base"], dtype=np.float32)
+        print("base_state: ", base_state)
         return base_state
 
     def _get_pos_rpy(self):
         state = self._reality.get_agent_state()
-        pos = np.array(state['pos'], dtype=np.float32)
-        rpy = np.array(state['rpy'], dtype=np.float32)
+        pos = np.array(state["pos"], dtype=np.float32)
+        rpy = np.array(state["rpy"], dtype=np.float32)
         return pos, rpy
 
     def _get_vel(self):
         state = self._reality.get_agent_state()
-        vel = np.array(state['vel'], dtype=np.float32)
+        vel = np.array(state["vel"], dtype=np.float32)
         return vel
 
     def _get_obs(self):
@@ -97,13 +99,16 @@ class NavEnv:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+
 def log_mesg(mesg):
     print(mesg)
     with open(LOG_FILENAME, "a") as f:
         f.write(mesg + "\n")
 
-def load_model(cfg,policy_dir, ckpt):
+
+def load_model(cfg, policy_dir, ckpt):
     pass
+
 
 def to_tensor(v):
     if torch.is_tensor(v):
@@ -113,21 +118,25 @@ def to_tensor(v):
     else:
         return torch.tensor(v, dtype=torch.float)
 
+
 def get_high_level_command(obs, goal, model):
     state = {}
     frames = []
-    state['sensor'] = goal
-    obs['depth'] = np.reshape(obs['depth'], [1, obs['depth'].shape[0], obs['depth'].shape[1]])
-    obs['depth'] = (obs['depth'] * 255).round().astype(np.uint8)
+    state["sensor"] = goal
+    obs["depth"] = np.reshape(
+        obs["depth"], [1, obs["depth"].shape[0], obs["depth"].shape[1]]
+    )
+    obs["depth"] = (obs["depth"] * 255).round().astype(np.uint8)
     for _ in range(3):
-        frames.append(obs['depth'])
-    obs['depth'] = np.concatenate(list(frames), axis=0)
-    print('obs_depth_shape: ', obs['depth'].shape)
-    state['depth'] = obs['depth']
+        frames.append(obs["depth"])
+    obs["depth"] = np.concatenate(list(frames), axis=0)
+    print("obs_depth_shape: ", obs["depth"].shape)
+    state["depth"] = obs["depth"]
 
     action = model.act(state, model.a1_z_in, sample=False)
 
     return [action[0], action[1], 0.0], action[2]
+
 
 @hydra.main(config_path="config/base_config.yaml", strict=True)
 def main(cfg):
@@ -143,14 +152,15 @@ def main(cfg):
         obs = {}
         start_pos = env._get_base_state()
         goal_list = [cfg.goal_x + start_pos[0], cfg.goal_y + start_pos[1]]
-        obs['target'] = np.array(goal_list, dtype=np.float32)
+        obs["target"] = np.array(goal_list, dtype=np.float32)
 
         num_actions = 0
         reached_goal = False
         lin_speed = [0.0, 0.0, 0.0]
         ang_speed = 0.0
 
-        model = load_model(cfg,
+        model = load_model(
+            cfg,
             policy_dir=cfg.policies_dir,
             ckpt=cfg.ckpt,
         )
@@ -187,9 +197,11 @@ def main(cfg):
         #       print("target speed = ", speed)
         #       env.step(speed)
         #       num_actions += 1
+
+
 #            input("Press key to continue")
 
-rospy.init_node('listener', anonymous=True)
+rospy.init_node("listener", anonymous=True)
 listener = collect_images()
 
 if __name__ == "__main__":

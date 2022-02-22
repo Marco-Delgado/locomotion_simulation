@@ -82,7 +82,10 @@ KNEE_P_GAIN = 230.0
 KNEE_D_GAIN = 10.0
 
 # Bases on the readings from Laikago's default pose.
-INIT_MOTOR_ANGLES = np.array([0, 0.9, -1.8] * NUM_LEGS)
+# INIT_MOTOR_ANGLES = np.array([0, 0.9, -1.8] * NUM_LEGS)
+
+# Closest to prone position I can currently get
+INIT_MOTOR_ANGLES = np.array([0, 1.4, -2.8] * NUM_LEGS)
 
 HIP_NAME_PATTERN = re.compile(r"\w+_hip_\w+")
 UPPER_NAME_PATTERN = re.compile(r"\w+_upper_\w+")

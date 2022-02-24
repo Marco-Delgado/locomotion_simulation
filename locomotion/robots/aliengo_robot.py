@@ -265,7 +265,7 @@ class AliengoRobot(aliengo.Aliengo):
 
         self._robot_interface.send_command(command)
 
-    def Reset(self, reload_urdf=True, default_motor_angles=np.array([0, 0, 0] * 4), reset_time=3.0):
+    def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0):
         """Reset the robot to default motor angles."""
         super(AliengoRobot, self).Reset(
             reload_urdf=reload_urdf,

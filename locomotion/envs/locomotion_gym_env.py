@@ -69,6 +69,12 @@ class LocomotionGymEnv(gym.Env):
         if gym_config.simulation_parameters.egl_rendering:
             self._pybullet_client.loadPlugin("eglRendererPlugin")
 
+        self._robot = self._robot_class(
+            pybullet_client=self._pybullet_client,
+            on_rack=self._on_rack,
+            motor_control_mode=self._gym_config.simulation_parameters.motor_control_mode,
+        )
+
         self.reset()
 
     def reset(
@@ -83,17 +89,11 @@ class LocomotionGymEnv(gym.Env):
         self._pybullet_client.setAdditionalSearchPath(pd.getDataPath())
         self._pybullet_client.loadURDF("plane.urdf")
 
-        self._robot = self._robot_class(
-            pybullet_client=self._pybullet_client,
-            on_rack=self._on_rack,
-            motor_control_mode=self._gym_config.simulation_parameters.motor_control_mode,
+        self._robot.Reset(
+            reload_urdf=False,
+            default_motor_angles=initial_motor_angles,
+            reset_time=reset_duration,
         )
-
-        # self._robot.Reset(
-        #     reload_urdf=False,
-        #     default_motor_angles=initial_motor_angles,
-        #     reset_time=reset_duration,
-        # )
 
         self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
         observations = self._get_observation()

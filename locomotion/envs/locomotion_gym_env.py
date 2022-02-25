@@ -23,6 +23,8 @@ import pybullet  # pytype: disable=import-error
 import pybullet_utils.bullet_client as bullet_client
 import pybullet_data as pd
 
+from typing import List, Tuple, Union
+from habitat.utils.geometry_utils import wrap_heading
 from locomotion.robots import robot_config
 from locomotion.envs.sensors import sensor
 from locomotion.envs.sensors import space_utils
@@ -49,6 +51,9 @@ class LocomotionGymEnv(gym.Env):
         self._robot_class = robot_class
         self._is_render = is_render
         self._on_rack = on_rack
+
+        self.joint_limits_lower = np.array([-0.1, -np.pi / 3, -5 / 6 * np.pi] * 4)
+        self.joint_limits_upper = np.array([0.1, np.pi / 2.1, -np.pi / 4] * 4)
 
         # Checks to see if the environment should be rendered or applied in the real world
         if self._is_render:
@@ -79,7 +84,7 @@ class LocomotionGymEnv(gym.Env):
 
     def reset(
         self,
-        initial_motor_angles=np.array([0, 1.4, -2.8] * 4),
+        initial_motor_angles=None,
         reset_duration=0.0,
     ):
         self._pybullet_client.resetSimulation()
@@ -90,7 +95,7 @@ class LocomotionGymEnv(gym.Env):
         self._pybullet_client.loadURDF("plane.urdf")
 
         self._robot.Reset(
-            reload_urdf=False,
+            reload_urdf=True,
             default_motor_angles=initial_motor_angles,
             reset_time=reset_duration,
         )
@@ -103,19 +108,23 @@ class LocomotionGymEnv(gym.Env):
     def step(self, action):
         action = np.array(action[SWITCHED_POSITIONS])
 
-        delta = self._last_true_motor_angle + action
-
-        for i, d in enumerate(delta):
+        for i, d in enumerate(action):
             if abs(d) <= 0.1:
-                delta[i] = 0
+                action[i] = 0
         # Clip actions and scale
-        delta = np.clip(delta, -1.0, 1.0) * np.deg2rad(10)
+        delta = np.clip(action, -1.0, 1.0) * np.deg2rad(10)
 
         self._last_true_motor_angle = np.array(
             self._robot.GetMotorAngles()[SWITCHED_POSITIONS]
         )
 
-        self._robot.Step(delta)
+        new_joint_angles = np.clip(
+            wrap_heading(self._last_true_motor_angle + delta),
+            self.joint_limits_lower[:],
+            self.joint_limits_upper[:],
+        )
+
+        self._robot.Step(new_joint_angles, robot_config.MotorControlMode.POSITION)
 
         observations = self._get_observation()
         observations = np.concatenate(list(observations.values()))
@@ -127,7 +136,7 @@ class LocomotionGymEnv(gym.Env):
             "joint_pos": self._robot.GetMotorAngles()[SWITCHED_POSITIONS],
             "joint_vel": self._robot.GetMotorVelocities()[SWITCHED_POSITIONS],
             "euler_rot": self._robot.GetBaseRollPitchYaw()[0:2],
-            "feet_contact": [1, 1, 1, 1],  # self._robot.GetFootContacts(),
+            "feet_contact": self._robot.GetFootContacts(),
         }
 
         return observations

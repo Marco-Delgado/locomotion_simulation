@@ -81,6 +81,7 @@ HIP_D_GAIN = 20.0
 KNEE_P_GAIN = 230.0
 KNEE_D_GAIN = 20.0
 
+
 # Bases on the readings from Laikago's default pose.
 # INIT_MOTOR_ANGLES = np.array([0, 0.9, -1.8] * NUM_LEGS)
 

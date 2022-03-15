@@ -18,7 +18,6 @@ from pybullet_utils import bullet_client
 from locomotion.robots import aliengo
 from locomotion.robots import aliengo_robot
 from locomotion.robots import robot_config
-from locomotion.robots import a1_robot_velocity_estimator
 
 FREQ = 0.5
 
@@ -56,8 +55,6 @@ def main(_):
             1 - blend_ratio
         ) * current_motor_angle + blend_ratio * desired_motor_angle
         robot.Step(action, robot_config.MotorControlMode.POSITION)
-        velocity_estimate = a1_robot_velocity_estimator.VelocityEstimator(robot)
-        print(velocity_estimate.estimated_velocity())
         time.sleep(0.005)
 
     # Move the legs in a sinusoidal curve

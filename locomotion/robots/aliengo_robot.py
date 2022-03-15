@@ -66,11 +66,11 @@ _DEFAULT_HIP_POSITIONS = (
 )
 
 ABDUCTION_P_GAIN = 230.0
-ABDUCTION_D_GAIN = 20.0
+ABDUCTION_D_GAIN = 500.0
 HIP_P_GAIN = 230.0
-HIP_D_GAIN = 20.0
+HIP_D_GAIN = 500.0
 KNEE_P_GAIN = 230.0
-KNEE_D_GAIN = 20.0
+KNEE_D_GAIN = 500.0
 
 
 COMMAND_CHANNEL_NAME = "LCM_Low_Cmd"
@@ -245,6 +245,9 @@ class AliengoRobot(aliengo.Aliengo):
 
     def GetBaseOrientation(self):
         return self._base_orientation.copy()
+
+    def GetDirection(self):
+        return np.array([0.0, 0.0, 0.0])
 
     @property
     def motor_velocities(self):

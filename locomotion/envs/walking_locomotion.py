@@ -14,13 +14,13 @@ class LocomotionWalk(LocomotionGymEnv):
         super().__init__(gym_config, robot_class, is_render, on_rack)
 
     def step(self, action):
-        action = np.array(action[SWITCHED_POSITIONS])
+        action = np.array(action)
 
-        deltas = action * JOINT_LIMITS_ENERGY + STANDING_POSITION
+        deltas = action # * JOINT_LIMITS_ENERGY + STANDING_POSITION
 
         self._robot.Step(deltas)
 
         observations = self._get_observation()
-        observations = np.concatenate(list(observations.values()))
+        # observations = np.concatenate(list(observations.values()))
 
         return observations, 0, False, {}

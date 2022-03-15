@@ -19,6 +19,7 @@ import gym
 from gym.spaces import Box
 from gym.utils import seeding
 import numpy as np
+import torch
 import pybullet  # pytype: disable=import-error
 import pybullet_utils.bullet_client as bullet_client
 import pybullet_data as pd
@@ -34,6 +35,8 @@ SWITCHED_POSITIONS = [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
 
 class LocomotionGymEnv(gym.Env):
     def __init__(self, gym_config, robot_class=None, is_render=False, on_rack=False):
+        self.new_joint_angles = [0, 0, 0] * 4
+        self._last_true_motor_angle = None
         self.observation_space = Box(
             low=-float("inf"),
             high=float("inf"),
@@ -102,11 +105,11 @@ class LocomotionGymEnv(gym.Env):
 
         self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
         observations = self._get_observation()
-        observations = np.concatenate(list(observations.values()))
+        # observations = np.concatenate(list(observations.values()))
         return observations
 
     def step(self, action):
-        action = np.array(action[SWITCHED_POSITIONS])
+        action = np.array(action)
 
         for i, d in enumerate(action):
             if abs(d) <= 0.1:
@@ -114,9 +117,7 @@ class LocomotionGymEnv(gym.Env):
         # Clip actions and scale
         delta = np.clip(action, -1.0, 1.0) * np.deg2rad(10)
 
-        self._last_true_motor_angle = np.array(
-            self._robot.GetMotorAngles()[SWITCHED_POSITIONS]
-        )
+        self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
 
         new_joint_angles = np.clip(
             wrap_heading(self._last_true_motor_angle + delta),
@@ -132,11 +133,20 @@ class LocomotionGymEnv(gym.Env):
         return observations, 0, False, {}
 
     def _get_observation(self):
-        observations = {
-            "joint_pos": self._robot.GetMotorAngles()[SWITCHED_POSITIONS],
-            "joint_vel": self._robot.GetMotorVelocities()[SWITCHED_POSITIONS],
-            "euler_rot": self._robot.GetBaseRollPitchYaw()[0:2],
-            "feet_contact": self._robot.GetFootContacts(),
-        }
-
+        observations = torch.cat(
+            (
+                torch.tensor(self._robot.GetBaseVelocity(), dtype=torch.float),
+                torch.tensor(self._robot.GetTrueBaseRollPitchYawRate(), dtype=torch.float),
+                # todo fix below to get orthogonal value to floor
+                torch.tensor(self._robot.GetBaseRollPitchYaw(), dtype=torch.float),
+                torch.tensor(self._robot.GetDirection(), dtype=torch.float),
+                torch.tensor(
+                    self._robot.GetMotorAngles() - np.array([0, 0.67, -1.25] * 4),
+                    dtype=torch.float,
+                ),
+                torch.tensor(self._robot.GetMotorVelocities(), dtype=torch.float),
+                torch.tensor(self.new_joint_angles, dtype=torch.float),
+            ),
+            dim=-1,
+        )
         return observations

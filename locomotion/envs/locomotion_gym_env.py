@@ -57,6 +57,22 @@ class LocomotionGymEnv(gym.Env):
 
         self.joint_limits_lower = np.array([-0.1, -np.pi / 3, -5 / 6 * np.pi] * 4)
         self.joint_limits_upper = np.array([0.1, np.pi / 2.1, -np.pi / 4] * 4)
+        self.deafult_dof_pos = np.array(
+            [
+                0.1000,
+                0.8000,
+                -1.5000,
+                -0.1000,
+                0.8000,
+                -1.5000,
+                0.1000,
+                1.0000,
+                -1.5000,
+                -0.1000,
+                1.0000,
+                -1.5000,
+            ]
+        )
 
         # Checks to see if the environment should be rendered or applied in the real world
         if self._is_render:
@@ -119,13 +135,13 @@ class LocomotionGymEnv(gym.Env):
 
         self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
 
-        new_joint_angles = np.clip(
+        self.new_joint_angles = np.clip(
             wrap_heading(self._last_true_motor_angle + delta),
             self.joint_limits_lower[:],
             self.joint_limits_upper[:],
         )
 
-        self._robot.Step(new_joint_angles, robot_config.MotorControlMode.POSITION)
+        self._robot.Step(self.new_joint_angles, robot_config.MotorControlMode.POSITION)
 
         observations = self._get_observation()
         observations = np.concatenate(list(observations.values()))
@@ -136,12 +152,14 @@ class LocomotionGymEnv(gym.Env):
         observations = torch.cat(
             (
                 torch.tensor(self._robot.GetBaseVelocity(), dtype=torch.float),
-                torch.tensor(self._robot.GetTrueBaseRollPitchYawRate(), dtype=torch.float),
-                # todo fix below to get orthogonal value to floor
-                torch.tensor(self._robot.GetBaseRollPitchYaw(), dtype=torch.float),
+                torch.tensor(
+                    self._robot.GetTrueBaseRollPitchYawRate(),
+                    dtype=torch.float,
+                ),
+                torch.tensor(self._robot.GetProjectedGravity(), dtype=torch.float),
                 torch.tensor(self._robot.GetDirection(), dtype=torch.float),
                 torch.tensor(
-                    self._robot.GetMotorAngles() - np.array([0, 0.67, -1.25] * 4),
+                    self._robot.GetMotorAngles() - self.deafult_dof_pos,
                     dtype=torch.float,
                 ),
                 torch.tensor(self._robot.GetMotorVelocities(), dtype=torch.float),

@@ -20,6 +20,7 @@ import math
 import re
 import numpy as np
 import time
+import torch
 
 from locomotion.robots import laikago_pose_utils
 from locomotion.robots import aliengo
@@ -66,12 +67,11 @@ _DEFAULT_HIP_POSITIONS = (
 )
 
 ABDUCTION_P_GAIN = 230.0
-ABDUCTION_D_GAIN = 500.0
+ABDUCTION_D_GAIN = 20.0
 HIP_P_GAIN = 230.0
-HIP_D_GAIN = 500.0
+HIP_D_GAIN = 20.0
 KNEE_P_GAIN = 230.0
-KNEE_D_GAIN = 500.0
-
+KNEE_D_GAIN = 20.0
 
 COMMAND_CHANNEL_NAME = "LCM_Low_Cmd"
 STATE_CHANNEL_NAME = "LCM_Low_State"
@@ -209,6 +209,24 @@ class AliengoRobot(aliengo.Aliengo):
             self._pybullet_client.resetJointState(
                 self.quadruped, motor_id, motor_angles[i], motor_velocities[i]
             )
+
+    def quat_rotate_inverse(self, q, v):
+        shape = q.shape
+        q_w = q[:, -1]
+        q_vec = q[:, :3]
+        a = v * torch.tensor(2.0 * q_w ** 2 - 1.0).unsqueeze(-1)
+        b = torch.cross(q_vec, v, dim=-1) * q_w.unsqueeze(-1) * 2.0
+        c = (
+            q_vec
+            * torch.bmm(q_vec.view(shape[0], 1, 3), v.view(shape[0], 3, 1)).squeeze(-1)
+            * 2.0
+        )
+        return np.array(a - b + c)[0]
+
+    def GetProjectedGravity(self):
+        gravity_vec = torch.FloatTensor([[0., 0., -1]])
+        base_quat = torch.FloatTensor([self.GetBaseOrientation()])
+        return self.quat_rotate_inverse(base_quat, gravity_vec)
 
     def GetTrueMotorAngles(self):
         return self._motor_angles.copy()

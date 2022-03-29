@@ -57,7 +57,7 @@ class LocomotionGymEnv(gym.Env):
 
         self.joint_limits_lower = np.array([-0.1, -np.pi / 3, -5 / 6 * np.pi] * 4)
         self.joint_limits_upper = np.array([0.1, np.pi / 2.1, -np.pi / 4] * 4)
-        self.deafult_dof_pos = np.array(
+        self.default_dof_pos = np.array(
             [
                 0.1000,
                 0.8000,
@@ -159,7 +159,7 @@ class LocomotionGymEnv(gym.Env):
                 torch.tensor(self._robot.GetProjectedGravity(), dtype=torch.float),
                 torch.tensor(self._robot.GetDirection(), dtype=torch.float),
                 torch.tensor(
-                    self._robot.GetMotorAngles() - self.deafult_dof_pos,
+                    self._robot.GetMotorAngles() - self.default_dof_pos,
                     dtype=torch.float,
                 ),
                 torch.tensor(self._robot.GetMotorVelocities(), dtype=torch.float),

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pybullet simulation of a Laikago robot."""
+import torch
 import math
 import re
 import numba
@@ -74,12 +75,12 @@ HIP_OFFSETS = (
     + COM_OFFSET
 )
 
-ABDUCTION_P_GAIN = 230.0
-ABDUCTION_D_GAIN = 20.0
-HIP_P_GAIN = 230.0
-HIP_D_GAIN = 20.0
-KNEE_P_GAIN = 230.0
-KNEE_D_GAIN = 20.0
+ABDUCTION_P_GAIN = 6.0
+ABDUCTION_D_GAIN = 5.0
+HIP_P_GAIN = 6.0
+HIP_D_GAIN = 5.0
+KNEE_P_GAIN = 6.0
+KNEE_D_GAIN = 5.0
 
 
 # Bases on the readings from Laikago's default pose.
@@ -555,3 +556,24 @@ class Aliengo(minitaur.Minitaur):
         # Does not work for Minitaur which has the four bar mechanism for now.
         motor_angles = self.GetMotorAngles()[leg_id * 3 : (leg_id + 1) * 3]
         return analytical_leg_jacobian(motor_angles, leg_id)
+
+    def quat_rotate_inverse(self, q, v):
+        shape = q.shape
+        q_w = q[:, -1]
+        q_vec = q[:, :3]
+        a = v * torch.tensor(2.0 * q_w ** 2 - 1.0).unsqueeze(-1)
+        b = torch.cross(q_vec, v, dim=-1) * q_w.unsqueeze(-1) * 2.0
+        c = (
+            q_vec
+            * torch.bmm(q_vec.view(shape[0], 1, 3), v.view(shape[0], 3, 1)).squeeze(-1)
+            * 2.0
+        )
+        return np.array(a - b + c)[0]
+
+    def GetProjectedGravity(self):
+        gravity_vec = torch.FloatTensor([[0., 0., -1]])
+        base_quat = torch.FloatTensor([self.GetBaseOrientation()])
+        return self.quat_rotate_inverse(base_quat, gravity_vec)
+
+    def GetDirection(self):
+        return np.array([0.1, 0.0, 0.0])

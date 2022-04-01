@@ -83,7 +83,6 @@ INIT_MOTOR_ANGLES = np.array(
         laikago_pose_utils.LAIKAGO_DEFAULT_HIP_ANGLE,
         laikago_pose_utils.LAIKAGO_DEFAULT_KNEE_ANGLE,
     ]
-    * NUM_LEGS
 )
 
 HIP_NAME_PATTERN = re.compile(r"\w+_hip_\w+")
@@ -176,7 +175,9 @@ class AliengoRobot(aliengo.Aliengo):
         self._robot_interface.send_command(np.zeros(60, dtype=np.float32))
 
         kwargs["on_rack"] = True
-        super(AliengoRobot, self).__init__(pybullet_client, time_step=time_step, **kwargs)
+        super(AliengoRobot, self).__init__(
+            pybullet_client, time_step=time_step, **kwargs
+        )
         self._init_complete = True
 
     def ReceiveObservation(self):
@@ -224,7 +225,7 @@ class AliengoRobot(aliengo.Aliengo):
         return np.array(a - b + c)[0]
 
     def GetProjectedGravity(self):
-        gravity_vec = torch.FloatTensor([[0., 0., -1]])
+        gravity_vec = torch.FloatTensor([[0.0, 0.0, -1]])
         base_quat = torch.FloatTensor([self.GetBaseOrientation()])
         return self.quat_rotate_inverse(base_quat, gravity_vec)
 
@@ -265,7 +266,7 @@ class AliengoRobot(aliengo.Aliengo):
         return self._base_orientation.copy()
 
     def GetDirection(self):
-        return np.array([0.0, 0.0, 0.0])
+        return np.array([1.0, 0.0, 0.0])
 
     @property
     def motor_velocities(self):

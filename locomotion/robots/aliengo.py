@@ -87,7 +87,23 @@ KNEE_D_GAIN = 5.0
 # INIT_MOTOR_ANGLES = np.array([0, 0.9, -1.8] * NUM_LEGS)
 
 # Closest to prone position I can currently get
-INIT_MOTOR_ANGLES = np.array([0, 1.4, -2.8] * NUM_LEGS)
+# INIT_MOTOR_ANGLES = np.array([0, 1.4, -2.8] * NUM_LEGS)
+INIT_MOTOR_ANGLES = np.array(
+    [
+        0.1000,
+        0.8000,
+        -1.5000,
+        -0.1000,
+        0.8000,
+        -1.5000,
+        0.1000,
+        1.0000,
+        -1.5000,
+        -0.1000,
+        1.0000,
+        -1.5000,
+    ]
+)
 
 HIP_NAME_PATTERN = re.compile(r"\w+_hip_\w+")
 UPPER_NAME_PATTERN = re.compile(r"\w+_upper_\w+")
@@ -571,7 +587,7 @@ class Aliengo(minitaur.Minitaur):
         return np.array(a - b + c)[0]
 
     def GetProjectedGravity(self):
-        gravity_vec = torch.FloatTensor([[0., 0., -1]])
+        gravity_vec = torch.FloatTensor([[0.0, 0.0, -1]])
         base_quat = torch.FloatTensor([self.GetBaseOrientation()])
         return self.quat_rotate_inverse(base_quat, gravity_vec)
 

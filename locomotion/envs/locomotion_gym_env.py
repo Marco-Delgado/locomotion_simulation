@@ -35,7 +35,6 @@ SWITCHED_POSITIONS = [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
 
 class LocomotionGymEnv(gym.Env):
     def __init__(self, gym_config, robot_class=None, is_render=False, on_rack=False):
-        self.new_joint_angles = [0, 0, 0] * 4
         self._last_true_motor_angle = None
         self.observation_space = Box(
             low=-float("inf"),
@@ -57,22 +56,6 @@ class LocomotionGymEnv(gym.Env):
 
         self.joint_limits_lower = np.array([-0.1, -np.pi / 3, -5 / 6 * np.pi] * 4)
         self.joint_limits_upper = np.array([0.1, np.pi / 2.1, -np.pi / 4] * 4)
-        self.default_dof_pos = np.array(
-            [
-                0.1000,
-                0.8000,
-                -1.5000,
-                -0.1000,
-                0.8000,
-                -1.5000,
-                0.1000,
-                1.0000,
-                -1.5000,
-                -0.1000,
-                1.0000,
-                -1.5000,
-            ]
-        )
 
         # Checks to see if the environment should be rendered or applied in the real world
         if self._is_render:
@@ -120,12 +103,12 @@ class LocomotionGymEnv(gym.Env):
         )
 
         self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
-        observations = self._get_observation()
+        observations = self.get_observation()
         # observations = np.concatenate(list(observations.values()))
         return observations
 
     def step(self, action):
-        action = np.array(action)
+        action = np.array(action[SWITCHED_POSITIONS])
 
         for i, d in enumerate(action):
             if abs(d) <= 0.1:
@@ -133,38 +116,28 @@ class LocomotionGymEnv(gym.Env):
         # Clip actions and scale
         delta = np.clip(action, -1.0, 1.0) * np.deg2rad(10)
 
-        self._last_true_motor_angle = np.array(self._robot.GetMotorAngles())
+        self._last_true_motor_angle = np.array(
+            self._robot.GetMotorAngles()[SWITCHED_POSITIONS]
+        )
 
-        self.new_joint_angles = np.clip(
+        new_joint_angles = np.clip(
             wrap_heading(self._last_true_motor_angle + delta),
             self.joint_limits_lower[:],
             self.joint_limits_upper[:],
         )
 
-        self._robot.Step(self.new_joint_angles, robot_config.MotorControlMode.POSITION)
+        self._robot.Step(new_joint_angles, robot_config.MotorControlMode.POSITION)
 
-        observations = self._get_observation()
+        observations = self.get_observation()
         observations = np.concatenate(list(observations.values()))
 
         return observations, 0, False, {}
 
-    def _get_observation(self):
-        observations = torch.cat(
-            (
-                torch.tensor(self._robot.GetBaseVelocity(), dtype=torch.float),
-                torch.tensor(
-                    self._robot.GetTrueBaseRollPitchYawRate(),
-                    dtype=torch.float,
-                ),
-                torch.tensor(self._robot.GetProjectedGravity(), dtype=torch.float),
-                torch.tensor(self._robot.GetDirection(), dtype=torch.float),
-                torch.tensor(
-                    self._robot.GetMotorAngles() - self.default_dof_pos,
-                    dtype=torch.float,
-                ),
-                torch.tensor(self._robot.GetMotorVelocities(), dtype=torch.float),
-                torch.tensor(self.new_joint_angles, dtype=torch.float),
-            ),
-            dim=-1,
-        )
+    def get_observation(self):
+        observations = {
+            "joint_pos": self._robot.GetMotorAngles()[SWITCHED_POSITIONS],
+            "joint_vel": self._robot.GetMotorVelocities()[SWITCHED_POSITIONS],
+            "euler_rot": self._robot.GetBaseRollPitchYaw()[0:2],
+            "feet_contact": self._robot.GetFootContacts(),
+        }
         return observations

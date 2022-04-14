@@ -6,12 +6,16 @@ import torch
 import time
 import numpy as np
 
+import pickle
+
 SWITCHED_POSITIONS = [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
-clip = 100
+clip = 0.20
 
 
 class LocomotionWalk(LocomotionGymEnv):
     def __init__(self, gym_config, robot_class, is_render=False, on_rack=False):
+        self.pickle_actions = pickle.load(open("checkpoints/actions.p", "rb"))
+        self.counter = 0
         self.action = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         self.default_motor_angle = np.array(
             [
@@ -44,20 +48,28 @@ class LocomotionWalk(LocomotionGymEnv):
             self._robot.Step(action)
 
     def step(self, action):
+        self.counter += 1
+        # if self.counter == 200:
+        #     quit()
         start_time = time.time()
+        action = np.array(action[SWITCHED_POSITIONS])
         self.action = action
 
-        action = np.array(action[SWITCHED_POSITIONS])
-
+        action = np.clip(action, -clip, clip)
+        actions_scaled = action * 0.25
         joint_angles = action + self.default_motor_angle
-        self._robot.Step(
-            joint_angles, motor_control_mode=robot_config.MotorControlMode.POSITION
-        )
+
+        # joint_angles = self.pickle_actions[self.counter] + self.default_motor_angle
+        joint_angles[0] = np.clip(joint_angles[0], -clip, clip)
+        joint_angles[3] = np.clip(joint_angles[3], -clip, clip)
+        joint_angles[6] = np.clip(joint_angles[6], -clip, clip)
+        joint_angles[9] = np.clip(joint_angles[9], -clip, clip)
+        self._robot.Step(joint_angles[SWITCHED_POSITIONS])
 
         while time.time() - start_time <= 1 / 60:
             pass
 
-        observations = self.get_observation()
+        observations = self.get_observation_rack()
         observations = np.clip(observations, -clip, clip)
 
         return observations, 0, False, {}
@@ -97,11 +109,11 @@ class LocomotionWalk(LocomotionGymEnv):
                 torch.tensor(self._robot.GetProjectedGravity(), dtype=torch.float),
                 torch.tensor(self._robot.GetDirection(), dtype=torch.float),
                 torch.tensor(
-                    self.get_motor_angles() - self.default_motor_angle,
+                    self.get_motor_angles() - self.default_motor_angle[SWITCHED_POSITIONS],
                     dtype=torch.float,
                 ),
                 torch.tensor(
-                    self._robot.GetMotorVelocities(),
+                    self.get_motor_velocities(),
                     dtype=torch.float,
                 ),
                 torch.tensor(self.action, dtype=torch.float),

@@ -149,20 +149,20 @@ class AliengoRobot(aliengo.Aliengo):
         # Initialize pd gain vector
 
         # AIR GAINS
-        self.ABDUCTION_P_GAIN = 6.0
+        self.ABDUCTION_P_GAIN = 22.0
         self.ABDUCTION_D_GAIN = 4.0
-        self.HIP_P_GAIN = 6.0
+        self.HIP_P_GAIN = 22.0
         self.HIP_D_GAIN = 15.0
-        self.KNEE_P_GAIN = 6.0
+        self.KNEE_P_GAIN = 22.0
         self.KNEE_D_GAIN = 15.0
 
         # LAND GAINS
-        # self.ABDUCTION_P_GAIN = 25.0
+        # self.ABDUCTION_P_GAIN = 35.0
         # self.ABDUCTION_D_GAIN = 0.0
-        # self.HIP_P_GAIN = 65.0
+        # self.HIP_P_GAIN = 35.0
         # self.HIP_D_GAIN = 5.0
-        # self.KNEE_P_GAIN = 90.0
-        # self.KNEE_D_GAIN = 10.0
+        # self.KNEE_P_GAIN = 60.0
+        # self.KNEE_D_GAIN = 5.0
 
         self.motor_kps = np.array([self.ABDUCTION_P_GAIN, self.HIP_P_GAIN, self.KNEE_P_GAIN] * 4)
         self.motor_kds = np.array([self.ABDUCTION_D_GAIN, self.HIP_D_GAIN, self.KNEE_D_GAIN] * 4)

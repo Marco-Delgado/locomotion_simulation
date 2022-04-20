@@ -9,15 +9,17 @@ import numpy as np
 import pickle
 
 SWITCHED_POSITIONS = [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
-clip = 0.20
+clip = 100
 
 
 class LocomotionWalk(LocomotionGymEnv):
     def __init__(self, gym_config, robot_class, is_render=False, on_rack=False):
+        self.pickle_obs = pickle.load(open("checkpoints/obs.p", "rb"))
         self.pickle_actions = pickle.load(open("checkpoints/actions.p", "rb"))
-        self.counter = 0
+        self.real = np.zeros((4, 500))
+        self.pickle = np.zeros((4, 500))
         self.action = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        self.default_motor_angle = np.array(
+        self.reference_pose = np.array(
             [
                 0.1000,
                 0.8000,
@@ -35,61 +37,50 @@ class LocomotionWalk(LocomotionGymEnv):
         )
         super().__init__(gym_config, robot_class, is_render, on_rack)
 
-        current_motor_angle = np.array(self.get_motor_angles())
-        desired_motor_angle = self.default_motor_angle
-
-        # Sets the robot to stand using blending
-        for t in tqdm(range(500)):
-            blend_ratio = np.minimum(t / 200.0, 1)
-            action = (
-                1 - blend_ratio
-            ) * current_motor_angle + blend_ratio * desired_motor_angle
-
-            self._robot.Step(action)
+        for stand_time in tqdm(range(100)):
+            self._robot.Step(self.reference_pose)
 
     def step(self, action):
-        self.counter += 1
-        # if self.counter == 200:
-        #     quit()
         start_time = time.time()
-        action = np.array(action[SWITCHED_POSITIONS])
-        self.action = action
 
-        action = np.clip(action, -clip, clip)
-        actions_scaled = action * 0.25
-        joint_angles = action + self.default_motor_angle
+        self.action = np.clip(action, -clip, clip)
 
-        # joint_angles = self.pickle_actions[self.counter] + self.default_motor_angle
-        joint_angles[0] = np.clip(joint_angles[0], -clip, clip)
-        joint_angles[3] = np.clip(joint_angles[3], -clip, clip)
-        joint_angles[6] = np.clip(joint_angles[6], -clip, clip)
-        joint_angles[9] = np.clip(joint_angles[9], -clip, clip)
-        self._robot.Step(joint_angles[SWITCHED_POSITIONS])
+        joint_angles = np.array(self.action[SWITCHED_POSITIONS]) + self.reference_pose
+        # joint_angles = (
+        #     self.pickle_actions[self.count][SWITCHED_POSITIONS] + self.reference_pose
+        # )
+
+        self._robot.Step(joint_angles)
+
+        observations = self.get_observation()
+        observations = torch.clip(observations, -clip, clip)
 
         while time.time() - start_time <= 1 / 60:
             pass
-
-        observations = self.get_observation_rack()
-        observations = np.clip(observations, -clip, clip)
-
         return observations, 0, False, {}
 
     def get_observation(self):
         observations = torch.cat(
             (
-                torch.tensor(self._robot.GetBaseVelocity(), dtype=torch.float),
+                torch.tensor(self._robot.GetBaseVelocity() * 2, dtype=torch.float),
                 torch.tensor(
-                    self._robot.GetTrueBaseRollPitchYawRate(),
-                    dtype=torch.float,
-                ),
-                torch.tensor(self._robot.GetProjectedGravity(), dtype=torch.float),
-                torch.tensor(self._robot.GetDirection(), dtype=torch.float),
-                torch.tensor(
-                    self.get_motor_angles() - self.default_motor_angle,
+                    self._robot.GetTrueBaseRollPitchYawRate() * 0.25,
                     dtype=torch.float,
                 ),
                 torch.tensor(
-                    self.get_motor_velocities(),
+                    self._robot.GetProjectedGravity(),
+                    dtype=torch.float,
+                ),
+                torch.tensor(
+                    self._robot.GetDirection() * [2, 2, 0.25],
+                    dtype=torch.float,
+                ),
+                torch.tensor(
+                    self.get_motor_angles() - self.reference_pose,
+                    dtype=torch.float,
+                ),
+                torch.tensor(
+                    self.get_motor_velocities() * 0.05,
                     dtype=torch.float,
                 ),
                 torch.tensor(self.action, dtype=torch.float),
@@ -101,19 +92,21 @@ class LocomotionWalk(LocomotionGymEnv):
     def get_observation_rack(self):
         observations = torch.cat(
             (
-                torch.tensor([0.4, 0, 0], dtype=torch.float),
+                torch.tensor([1.7, 0, 0], dtype=torch.float),
                 torch.tensor(
-                    [0, 0, 0],
+                    self._robot.GetTrueBaseRollPitchYawRate() * 0,
                     dtype=torch.float,
                 ),
                 torch.tensor(self._robot.GetProjectedGravity(), dtype=torch.float),
-                torch.tensor(self._robot.GetDirection(), dtype=torch.float),
                 torch.tensor(
-                    self.get_motor_angles() - self.default_motor_angle[SWITCHED_POSITIONS],
+                    self._robot.GetDirection() * [2, 2, 0.25], dtype=torch.float
+                ),
+                torch.tensor(
+                    self.get_motor_angles() - self.reference_pose,
                     dtype=torch.float,
                 ),
                 torch.tensor(
-                    self.get_motor_velocities(),
+                    self.get_motor_velocities() * 0.05,
                     dtype=torch.float,
                 ),
                 torch.tensor(self.action, dtype=torch.float),

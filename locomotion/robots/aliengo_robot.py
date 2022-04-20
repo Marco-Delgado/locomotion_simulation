@@ -147,25 +147,19 @@ class AliengoRobot(aliengo.Aliengo):
     def __init__(self, pybullet_client, time_step=0.002, **kwargs):
         """Initializes the robot class."""
         # Initialize pd gain vector
+        self.ABDUCTION_P_GAIN = 15
+        self.HIP_P_GAIN = 10
+        self.KNEE_P_GAIN = 10
+        self.ABDUCTION_D_GAIN = 1.5
+        self.HIP_D_GAIN = 1.0
+        self.KNEE_D_GAIN = 1.0
 
-        # AIR GAINS
-        self.ABDUCTION_P_GAIN = 22.0
-        self.ABDUCTION_D_GAIN = 4.0
-        self.HIP_P_GAIN = 22.0
-        self.HIP_D_GAIN = 15.0
-        self.KNEE_P_GAIN = 22.0
-        self.KNEE_D_GAIN = 15.0
-
-        # LAND GAINS
-        # self.ABDUCTION_P_GAIN = 35.0
-        # self.ABDUCTION_D_GAIN = 0.0
-        # self.HIP_P_GAIN = 35.0
-        # self.HIP_D_GAIN = 5.0
-        # self.KNEE_P_GAIN = 60.0
-        # self.KNEE_D_GAIN = 5.0
-
-        self.motor_kps = np.array([self.ABDUCTION_P_GAIN, self.HIP_P_GAIN, self.KNEE_P_GAIN] * 4)
-        self.motor_kds = np.array([self.ABDUCTION_D_GAIN, self.HIP_D_GAIN, self.KNEE_D_GAIN] * 4)
+        self.motor_kps = np.array(
+            [self.ABDUCTION_P_GAIN, self.HIP_P_GAIN, self.KNEE_P_GAIN] * 4
+        )
+        self.motor_kds = np.array(
+            [self.ABDUCTION_D_GAIN, self.HIP_D_GAIN, self.KNEE_D_GAIN] * 4
+        )
         self._pybullet_client = pybullet_client
         self.time_step = time_step
 
@@ -276,7 +270,7 @@ class AliengoRobot(aliengo.Aliengo):
         return self._base_orientation.copy()
 
     def GetDirection(self):
-        return np.array([0.4, 0.0, 0.0])
+        return np.array([0.85, 0.0, 0.0])
 
     @property
     def motor_velocities(self):

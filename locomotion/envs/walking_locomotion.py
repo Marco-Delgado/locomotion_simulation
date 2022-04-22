@@ -7,8 +7,8 @@ import time
 import numpy as np
 
 import pickle
+import matplotlib.pyplot as plt
 
-SWITCHED_POSITIONS = [3, 4, 5, 0, 1, 2, 9, 10, 11, 6, 7, 8]
 clip = 100
 
 
@@ -16,9 +16,11 @@ class LocomotionWalk(LocomotionGymEnv):
     def __init__(self, gym_config, robot_class, is_render=False, on_rack=False):
         self.pickle_obs = pickle.load(open("checkpoints/obs.p", "rb"))
         self.pickle_actions = pickle.load(open("checkpoints/actions.p", "rb"))
-        self.real = np.zeros((4, 500))
-        self.pickle = np.zeros((4, 500))
-        self.action = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.torque = pickle.load(open("checkpoints/torque.p", "rb"))
+        self.pickle_a = []
+        self.pickle = []
+        self.action = np.zeros(12)
+        self.count = 0
         self.reference_pose = np.array(
             [
                 0.1000,
@@ -37,23 +39,103 @@ class LocomotionWalk(LocomotionGymEnv):
         )
         super().__init__(gym_config, robot_class, is_render, on_rack)
 
-        for stand_time in tqdm(range(100)):
-            self._robot.Step(self.reference_pose)
+        current_motor_angle = np.array(self.get_motor_angles())
+        desired_motor_angle = self.reference_pose
+        for t in tqdm(range(500)):
+            blend_ratio = np.minimum(t / 200.0, 1)
+            action = (
+                         1 - blend_ratio
+                     ) * current_motor_angle + blend_ratio * desired_motor_angle
+
+            self._robot.Step(action)
 
     def step(self, action):
         start_time = time.time()
+        self.count += 1
+
+        # if self.count == 248:
+        #     plt.figure()
+        #     plt.plot(np.arange(500), self.real[0], label="sim obs")
+        #     plt.plot(np.arange(500), self.pickle[0], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('abduction.png')
+        #     print("saved fig")
+        #     quit()
+        # if self.count == 248:
+        #     plt.figure()
+        #     plt.plot(np.arange(500), self.real[1], label="real actions")
+        #     plt.plot(np.arange(500), self.pickle[1], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('hip.png')
+        #     print("saved fig")
+        # if self.count == 248:
+        #     plt.figure()
+        #     plt.plot(np.arange(500), self.real[2], label="real actions")
+        #     plt.plot(np.arange(500), self.pickle[2], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('knee.png')
+        #     print("saved fig")
+        #     quit()
+
+        # if self.count == 499:
+        #     plt.plot(np.arange(500), self.real[0], label="real actions")
+        #     plt.plot(np.arange(500), self.pickle[0], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('test.png')
+        #     print("saved fig")
+        #     quit()
+        # if self.count == 248:
+        #     plt.figure()
+        #     plt.plot(np.arange(500), self.real[0], label="sim obs")
+        #     plt.plot(np.arange(500), self.pickle[0], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('abduction.png')
+        #     print("saved fig")
+        #     quit()
+        # if self.count == 248:
+        #     plt.figure()
+        #     plt.plot(np.arange(500), self.real[1], label="real actions")
+        #     plt.plot(np.arange(500), self.pickle[1], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('hip.png')
+        #     print("saved fig")
+        # if self.count == 248:
+        #     plt.figure()
+        #     plt.plot(np.arange(500), self.real[2], label="real actions")
+        #     plt.plot(np.arange(500), self.pickle[2], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('knee.png')
+        #     print("saved fig")
+        #     quit()
+
+        # if self.count == 499:
+        #     plt.plot(np.arange(500), self.real[0], label="real actions")
+        #     plt.plot(np.arange(500), self.pickle[0], label="sim actions")
+        #     plt.legend()
+        #     plt.savefig('test.png')
+        #     print("saved fig")
+        #     quit()
 
         self.action = np.clip(action, -clip, clip)
+        # print("real action: ", self.action)
 
-        joint_angles = np.array(self.action[SWITCHED_POSITIONS]) + self.reference_pose
-        # joint_angles = (
-        #     self.pickle_actions[self.count][SWITCHED_POSITIONS] + self.reference_pose
-        # )
+        # self.real[:, self.count] = np.array(self.action)
+        # self.pickle[:, self.count] = np.array(self.pickle_actions[self.count])
+
+        # self.real[:, self.count] = np.array(self.pickle_obs[self.count][12:24])
+        # self.pickle[:, self.count] = np.array(self.pickle_actions[self.count] * 0.15)
+
+        joint_angles = (np.array(self.action) * 0.5 * 0.30) + self.reference_pose
+        # print(self.pickle_obs[self.count][9:12])
+        joint_angles[[0, 3, 6, 9]] = np.clip(joint_angles[[0, 3, 6, 9]], -0.1, 0.1)
 
         self._robot.Step(joint_angles)
 
         observations = self.get_observation()
         observations = torch.clip(observations, -clip, clip)
+
+        self.pickle.append(observations)
+        self.pickle_a.append(self.action)
 
         while time.time() - start_time <= 1 / 60:
             pass
@@ -116,7 +198,7 @@ class LocomotionWalk(LocomotionGymEnv):
         return observations
 
     def get_motor_angles(self):
-        return self._robot.GetMotorAngles()[SWITCHED_POSITIONS]
+        return self._robot.GetMotorAngles()
 
     def get_motor_velocities(self):
-        return self._robot.GetMotorVelocities()[SWITCHED_POSITIONS]
+        return self._robot.GetMotorVelocities()

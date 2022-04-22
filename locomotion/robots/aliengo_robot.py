@@ -26,6 +26,7 @@ from locomotion.robots import laikago_pose_utils
 from locomotion.robots import aliengo
 from locomotion.robots import a1_robot_velocity_estimator
 from locomotion.robots import minitaur
+from locomotion.robots import minitaur_motor
 from locomotion.robots import robot_config
 from locomotion.envs import locomotion_gym_config
 from robot_interface import RobotInterface  # pytype: disable=import-error
@@ -55,6 +56,22 @@ KNEE_JOINT_OFFSET = 0.0
 DOFS_PER_LEG = 3
 JOINT_OFFSETS = np.array(
     [HIP_JOINT_OFFSET, UPPER_LEG_JOINT_OFFSET, KNEE_JOINT_OFFSET] * 4
+)
+REFEERENCE_POSE = np.array(
+    [
+        -0.1000,
+        0.8000,
+        -1.5000,
+        0.1000,
+        0.8000,
+        -1.5000,
+        -0.1000,
+        1.0000,
+        -1.5000,
+        0.1000,
+        1.0000,
+        -1.5000,
+    ]
 )
 PI = math.pi
 
@@ -147,12 +164,20 @@ class AliengoRobot(aliengo.Aliengo):
     def __init__(self, pybullet_client, time_step=0.002, **kwargs):
         """Initializes the robot class."""
         # Initialize pd gain vector
-        self.ABDUCTION_P_GAIN = 15
-        self.HIP_P_GAIN = 10
-        self.KNEE_P_GAIN = 10
-        self.ABDUCTION_D_GAIN = 1.5
-        self.HIP_D_GAIN = 1.0
-        self.KNEE_D_GAIN = 1.0
+        #Working with action acaling of (0.5 * 0.35) motor command of 0.85
+        # self.ABDUCTION_P_GAIN = 150
+        # self.HIP_P_GAIN = 150
+        # self.KNEE_P_GAIN = 150
+        # self.ABDUCTION_D_GAIN = 5
+        # self.HIP_D_GAIN = 5.0
+        # self.KNEE_D_GAIN = 5.0
+
+        self.ABDUCTION_P_GAIN = 230
+        self.HIP_P_GAIN = 230
+        self.KNEE_P_GAIN = 230
+        self.ABDUCTION_D_GAIN = 5
+        self.HIP_D_GAIN = 5.0
+        self.KNEE_D_GAIN = 5.0
 
         self.motor_kps = np.array(
             [self.ABDUCTION_P_GAIN, self.HIP_P_GAIN, self.KNEE_P_GAIN] * 4
@@ -276,7 +301,7 @@ class AliengoRobot(aliengo.Aliengo):
     def motor_velocities(self):
         return self._motor_velocities.copy()
 
-    def ApplyAction(self, motor_commands):
+    def ApplyAction(self, motor_commands, motor_control_mode):
         """Clips and then apply the motor commands using the motor model.
 
         Args:
@@ -289,7 +314,11 @@ class AliengoRobot(aliengo.Aliengo):
             command[motor_id * 5] = motor_commands[motor_id]
             command[motor_id * 5 + 1] = self.motor_kps[motor_id]
             command[motor_id * 5 + 3] = self.motor_kds[motor_id]
-
+        if motor_control_mode == robot_config.MotorControlMode.TORQUE:
+            for motor_id in range(NUM_MOTORS):
+                command[motor_id * 5 + 4] = motor_commands[motor_id]
+        elif motor_control_mode == robot_config.MotorControlMode.HYBRID:
+            command = np.array(motor_commands, dtype=np.float32)
         self._robot_interface.send_command(command)
 
     def Reset(self, reload_urdf=True, default_motor_angles=None, reset_time=3.0):
@@ -313,6 +342,6 @@ class AliengoRobot(aliengo.Aliengo):
         self._is_alive = False
 
     def _StepInternal(self, action, motor_control_mode=None):
-        self.ApplyAction(action)
+        self.ApplyAction(action, motor_control_mode)
         self.ReceiveObservation()
         self._state_action_counter += 1

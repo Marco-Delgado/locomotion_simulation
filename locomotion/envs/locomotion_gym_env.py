@@ -79,7 +79,7 @@ class LocomotionGymEnv(gym.Env):
         self._robot = self._robot_class(
             pybullet_client=self._pybullet_client,
             on_rack=self._on_rack,
-            motor_control_mode=self._gym_config.simulation_parameters.motor_control_mode,
+            motor_control_mode=self._gym_config.simulation_parameters.motor_control_mode
         )
 
         self.reset()

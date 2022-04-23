@@ -164,18 +164,11 @@ class AliengoRobot(aliengo.Aliengo):
     def __init__(self, pybullet_client, time_step=0.002, **kwargs):
         """Initializes the robot class."""
         # Initialize pd gain vector
-        #Working with action acaling of (0.5 * 0.35) motor command of 0.85
-        # self.ABDUCTION_P_GAIN = 150
-        # self.HIP_P_GAIN = 150
-        # self.KNEE_P_GAIN = 150
-        # self.ABDUCTION_D_GAIN = 5
-        # self.HIP_D_GAIN = 5.0
-        # self.KNEE_D_GAIN = 5.0
-
-        self.ABDUCTION_P_GAIN = 230
-        self.HIP_P_GAIN = 230
-        self.KNEE_P_GAIN = 230
-        self.ABDUCTION_D_GAIN = 5
+        # Working with action scaling of (0.5 * 0.35) motor command of 0.85
+        self.ABDUCTION_P_GAIN = 150.0
+        self.HIP_P_GAIN = 150.0
+        self.KNEE_P_GAIN = 150.0
+        self.ABDUCTION_D_GAIN = 5.0
         self.HIP_D_GAIN = 5.0
         self.KNEE_D_GAIN = 5.0
 
